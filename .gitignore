@@ -7,7 +7,7 @@ coverage/
 **/.env
 **/.env.*
 !**/.env.example
-provisioning/
+
 *.log
 .DS_Store
 android/.gradle/
