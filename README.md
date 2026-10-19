@@ -6,6 +6,8 @@ Android encrypts the exact OTP string locally with AES-256-GCM. The iPhone decry
 
 The backend is **deployed and verified** at [otp-relay-production-a3b3.up.railway.app](https://otp-relay-production-a3b3.up.railway.app). Android and Xcode build projects are included with that URL configured; the Android APK and locally signed iOS Simulator app/extension build successfully. [Live deployment, local artifacts and verification](docs/deployment.md). Physical-device SMS → AutoFill latency remains unmeasured; actual iPhone installation needs your own Apple Developer signing setup.
 
+**Installing on your iPhone?** Follow the [step-by-step iPhone installation README](ios/README.md) for personal signing, USB installation, private pairing and enabling AutoFill.
+
 ```mermaid
 sequenceDiagram
     participant A as Android (approved SMS senders)

@@ -1,0 +1,39 @@
+{
+  "" : {
+    "diagnostics" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPProvider.build/Objects-normal/arm64/OTPProvider-primary.dia",
+    "emit-module-dependencies" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPProvider.build/Objects-normal/arm64/OTPProvider-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPProvider.build/Objects-normal/arm64/OTPProvider-primary-emit-module.dia",
+    "pch" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPProvider.build/Objects-normal/arm64/OTPProvider-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPProvider.build/Objects-normal/arm64/OTPProvider-primary.swiftdeps"
+  },
+  "/Users/mac/Desktop/otp-relay-starter/ios/OTPProvider/CredentialProviderViewController.swift" : {
+    "const-values" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPProvider.build/Objects-normal/arm64/CredentialProviderViewController.swiftconstvalues",
+    "dependencies" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPProvider.build/Objects-normal/arm64/CredentialProviderViewController.d",
+    "diagnostics" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPProvider.build/Objects-normal/arm64/CredentialProviderViewController.dia",
+    "index-unit-output-path" : "/OTPRelay.build/Debug-iphoneos/OTPProvider.build/Objects-normal/arm64/CredentialProviderViewController.o",
+    "llvm-bc" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPProvider.build/Objects-normal/arm64/CredentialProviderViewController.bc",
+    "object" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPProvider.build/Objects-normal/arm64/CredentialProviderViewController.o",
+    "swift-dependencies" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPProvider.build/Objects-normal/arm64/CredentialProviderViewController.swiftdeps",
+    "swiftmodule" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPProvider.build/Objects-normal/arm64/CredentialProviderViewController~partial.swiftmodule"
+  },
+  "/Users/mac/Desktop/otp-relay-starter/ios/Shared/RelayClient.swift" : {
+    "const-values" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPProvider.build/Objects-normal/arm64/RelayClient.swiftconstvalues",
+    "dependencies" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPProvider.build/Objects-normal/arm64/RelayClient.d",
+    "diagnostics" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPProvider.build/Objects-normal/arm64/RelayClient.dia",
+    "index-unit-output-path" : "/OTPRelay.build/Debug-iphoneos/OTPProvider.build/Objects-normal/arm64/RelayClient.o",
+    "llvm-bc" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPProvider.build/Objects-normal/arm64/RelayClient.bc",
+    "object" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPProvider.build/Objects-normal/arm64/RelayClient.o",
+    "swift-dependencies" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPProvider.build/Objects-normal/arm64/RelayClient.swiftdeps",
+    "swiftmodule" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPProvider.build/Objects-normal/arm64/RelayClient~partial.swiftmodule"
+  },
+  "/Users/mac/Desktop/otp-relay-starter/ios/Shared/RelayPayload.swift" : {
+    "const-values" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPProvider.build/Objects-normal/arm64/RelayPayload.swiftconstvalues",
+    "dependencies" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPProvider.build/Objects-normal/arm64/RelayPayload.d",
+    "diagnostics" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPProvider.build/Objects-normal/arm64/RelayPayload.dia",
+    "index-unit-output-path" : "/OTPRelay.build/Debug-iphoneos/OTPProvider.build/Objects-normal/arm64/RelayPayload.o",
+    "llvm-bc" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPProvider.build/Objects-normal/arm64/RelayPayload.bc",
+    "object" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPProvider.build/Objects-normal/arm64/RelayPayload.o",
+    "swift-dependencies" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPProvider.build/Objects-normal/arm64/RelayPayload.swiftdeps",
+    "swiftmodule" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPProvider.build/Objects-normal/arm64/RelayPayload~partial.swiftmodule"
+  }
+}

@@ -56,9 +56,9 @@
 		5E99741F9FD116089BCE8281 /* CredentialProviderViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CredentialProviderViewController.swift; sourceTree = "<group>"; };
 		8DD811E40E52CDF194483E57 /* RelayClientIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelayClientIntegrationTests.swift; sourceTree = "<group>"; };
 		8E1054C1312572D230489D55 /* RelayClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelayClient.swift; sourceTree = "<group>"; };
-		9455CC3349033843E047B2BD /* OTPProvider.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = OTPProvider.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		9455CC3349033843E047B2BD /* OTPProvider.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = OTPProvider.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		971CB6C01B907899423C2433 /* OTPRelayIntegrationTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = OTPRelayIntegrationTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		EC2D3850CA12B5DF3707D7A0 /* OTPRelay.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = OTPRelay.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		EC2D3850CA12B5DF3707D7A0 /* OTPRelay.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OTPRelay.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -189,11 +189,9 @@
 						ProvisioningStyle = Automatic;
 					};
 					A548A00C77B00E7418A2D880 = {
-						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 					D2438F1AC07CEBE21E03D8AE = {
-						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -270,13 +268,13 @@
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = OTPProvider/OTPProvider.entitlements;
+				DEVELOPMENT_TEAM = 4J275C55SW;
 				INFOPLIST_FILE = "OTPProvider/Extension-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.acefolio.otprelay.OTPProvider;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -288,13 +286,13 @@
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = OTPProvider/OTPProvider.entitlements;
+				DEVELOPMENT_TEAM = 4J275C55SW;
 				INFOPLIST_FILE = "OTPProvider/Extension-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.acefolio.otprelay.OTPProvider;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -307,6 +305,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = OTPRelay/OTPRelay.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 4J275C55SW;
 				INFOPLIST_FILE = OTPRelay/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "OTP Relay";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -500,6 +499,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = OTPRelay/OTPRelay.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 4J275C55SW;
 				INFOPLIST_FILE = OTPRelay/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "OTP Relay";
 				LD_RUNPATH_SEARCH_PATHS = (

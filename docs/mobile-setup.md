@@ -32,6 +32,8 @@ scripts/test-android-extractor.sh
 
 ## iOS app and AutoFill extension
 
+For installation on a physical iPhone, follow the [step-by-step iPhone installation README](../ios/README.md). It covers your personal signing account, device preparation, private pairing and AutoFill settings.
+
 Open `ios/OTPRelay.xcodeproj`, scheme **OTPRelay**. No project creation is needed. Both the app and OTPProvider extension include Shared source, CryptoKit decryption, App Group/Keychain Sharing and AutoFill entitlements; `ProvidesOneTimeCodes` is enabled. Bundle IDs are `com.acefolio.otprelay` / `com.acefolio.otprelay.OTPProvider`, minimum iOS 18.
 
 Build on this Mac without using a work team:

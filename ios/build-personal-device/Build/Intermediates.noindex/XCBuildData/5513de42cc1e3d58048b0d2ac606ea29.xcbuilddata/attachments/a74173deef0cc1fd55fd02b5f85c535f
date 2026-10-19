@@ -1,0 +1,49 @@
+{
+  "" : {
+    "diagnostics" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/OTPRelay-primary.dia",
+    "emit-module-dependencies" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/OTPRelay-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/OTPRelay-primary-emit-module.dia",
+    "pch" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/OTPRelay-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/OTPRelay-primary.swiftdeps"
+  },
+  "/Users/mac/Desktop/otp-relay-starter/ios/OTPRelay/ContentView.swift" : {
+    "const-values" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/ContentView.swiftconstvalues",
+    "dependencies" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/ContentView.d",
+    "diagnostics" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/ContentView.dia",
+    "index-unit-output-path" : "/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/ContentView.o",
+    "llvm-bc" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/ContentView.bc",
+    "object" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/ContentView.o",
+    "swift-dependencies" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/ContentView.swiftdeps",
+    "swiftmodule" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/ContentView~partial.swiftmodule"
+  },
+  "/Users/mac/Desktop/otp-relay-starter/ios/OTPRelay/OTPRelayApp.swift" : {
+    "const-values" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/OTPRelayApp.swiftconstvalues",
+    "dependencies" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/OTPRelayApp.d",
+    "diagnostics" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/OTPRelayApp.dia",
+    "index-unit-output-path" : "/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/OTPRelayApp.o",
+    "llvm-bc" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/OTPRelayApp.bc",
+    "object" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/OTPRelayApp.o",
+    "swift-dependencies" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/OTPRelayApp.swiftdeps",
+    "swiftmodule" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/OTPRelayApp~partial.swiftmodule"
+  },
+  "/Users/mac/Desktop/otp-relay-starter/ios/Shared/RelayClient.swift" : {
+    "const-values" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/RelayClient.swiftconstvalues",
+    "dependencies" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/RelayClient.d",
+    "diagnostics" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/RelayClient.dia",
+    "index-unit-output-path" : "/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/RelayClient.o",
+    "llvm-bc" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/RelayClient.bc",
+    "object" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/RelayClient.o",
+    "swift-dependencies" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/RelayClient.swiftdeps",
+    "swiftmodule" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/RelayClient~partial.swiftmodule"
+  },
+  "/Users/mac/Desktop/otp-relay-starter/ios/Shared/RelayPayload.swift" : {
+    "const-values" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/RelayPayload.swiftconstvalues",
+    "dependencies" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/RelayPayload.d",
+    "diagnostics" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/RelayPayload.dia",
+    "index-unit-output-path" : "/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/RelayPayload.o",
+    "llvm-bc" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/RelayPayload.bc",
+    "object" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/RelayPayload.o",
+    "swift-dependencies" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/RelayPayload.swiftdeps",
+    "swiftmodule" : "/Users/mac/Desktop/otp-relay-starter/ios/build-personal-device/Build/Intermediates.noindex/OTPRelay.build/Debug-iphoneos/OTPRelay.build/Objects-normal/arm64/RelayPayload~partial.swiftmodule"
+  }
+}
