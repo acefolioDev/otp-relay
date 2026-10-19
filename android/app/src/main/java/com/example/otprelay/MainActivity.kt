@@ -7,8 +7,46 @@ import android.os.Bundle
 import android.widget.*
 
 class MainActivity : Activity() {
+    private var forwarding: CheckBox? = null
+    @Deprecated("Android Activity result bridge")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != 20 || resultCode != RESULT_OK) return
+        try {
+            val uri = data?.data ?: return
+            val bytes = contentResolver.openInputStream(uri)?.use { input ->
+                val buffer = ByteArray(4097)
+                var count = 0
+                while (count < buffer.size) {
+                    val n = input.read(buffer, count, buffer.size - count)
+                    if (n <= 0) break
+                    count += n
+                }
+                require(count <= 4096)
+                buffer.copyOf(count)
+            } ?: return
+            val json = bytes.toString(Charsets.UTF_8)
+            RelayPairing.parse(json)
+            SecretStore.save(this, json)
+            getSharedPreferences("relay", MODE_PRIVATE).edit().putString("url", BuildConfig.RELAY_BASE_URL).apply()
+            Toast.makeText(this, "Pairing imported. Approve senders before enabling forwarding.", Toast.LENGTH_LONG).show()
+        } catch (_: Exception) {
+            Toast.makeText(this, "Unable to import private android.json", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 12 && grantResults.firstOrNull() != PackageManager.PERMISSION_GRANTED) {
+            getSharedPreferences("relay", MODE_PRIVATE).edit().putBoolean("enabled", false).apply()
+            forwarding?.isChecked = false
+            Toast.makeText(this, "SMS permission denied; automatic forwarding is off", Toast.LENGTH_LONG).show()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
         val preferences = getSharedPreferences("relay", MODE_PRIVATE)
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -20,20 +58,31 @@ class MainActivity : Activity() {
             root.addView(it)
         }
         root.addView(TextView(this).apply {
-            text = "OTP Relay — only use on phones and accounts you own."
+            setText(R.string.introduction)
             textSize = 18f
         })
-        val url = field("HTTPS relay URL", preferences.getString("url", "") ?: "")
+        val url = field("HTTPS relay URL", preferences.getString("url", BuildConfig.RELAY_BASE_URL) ?: BuildConfig.RELAY_BASE_URL)
         val pairingInput = field("Paste private android.json (blank keeps existing pairing)", "").apply {
             inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
         }
         val senders = field("Allowed sender IDs (comma separated)", preferences.getString("senders", "") ?: "")
         val enabled = CheckBox(this).apply {
-            text = "Automatically forward OTPs from allowed senders"
+            setText(R.string.enable_forwarding)
             isChecked = preferences.getBoolean("enabled", false)
         }
+        forwarding = enabled
         root.addView(enabled)
-        val save = Button(this).apply { text = "Save configuration" }
+        root.addView(Button(this).apply {
+            setText(R.string.import_pairing)
+            setOnClickListener {
+                val intent = android.content.Intent(android.content.Intent.ACTION_OPEN_DOCUMENT).apply {
+                    addCategory(android.content.Intent.CATEGORY_OPENABLE)
+                    type = "application/json"
+                }
+                startActivityForResult(intent, 20)
+            }
+        })
+        val save = Button(this).apply { setText(R.string.save_configuration) }
         root.addView(save)
         save.setOnClickListener {
             val host = url.text.toString().trim().trimEnd('/')
@@ -69,7 +118,7 @@ class MainActivity : Activity() {
             }
         }
         val code = field("Synthetic test code (numeric or mixed case)", "")
-        val send = Button(this).apply { text = "Send test code to iPhone" }
+        val send = Button(this).apply { setText(R.string.send_test) }
         root.addView(send)
         send.setOnClickListener {
             val candidate = code.text.toString().trim()

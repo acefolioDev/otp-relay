@@ -10,3 +10,11 @@ coverage/
 provisioning/
 *.log
 .DS_Store
+android/.gradle/
+android/local.properties
+android/**/build/
+ios/build/
+ios/DerivedData/
+**/xcuserdata/
+ios/Signing.local.xcconfig
+artifacts/

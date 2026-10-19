@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">OTP Relay</string>
+    <string name="introduction">OTP Relay — only use on phones and accounts you own.</string>
+    <string name="enable_forwarding">Automatically forward OTPs from allowed senders</string>
+    <string name="import_pairing">Import private pairing file</string>
+    <string name="save_configuration">Save configuration</string>
+    <string name="send_test">Send test code to iPhone</string>
+</resources>

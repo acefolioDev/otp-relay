@@ -1,52 +1,71 @@
-# Mobile source integration
+# Mobile setup with the live backend
 
-These are source examples, not complete signed APK/IPA projects. Both clients use only the new `/api/v1` encrypted protocol. Legacy raw token settings must be replaced with generated pairing JSON. Test only on devices/accounts you control.
+Both build projects use **https://otp-relay-production-a3b3.up.railway.app** by default. Actual private device pairing files are kept in the ignored `provisioning/` directory; do not embed them in source, APKs, app bundles or Git. Each file matches the credential hashes already configured on Railway.
 
 ## Android
 
-1. Create an Android Studio Empty Views Activity project, package `com.example.otprelay`, Kotlin, minimum SDK 26+. Copy all Kotlin files from `android/app/src/main/java/com/example/otprelay/` to your package and merge the provided manifest.
-2. The manifest requires INTERNET and RECEIVE_SMS, disables cleartext HTTP and backup, and accepts the system SMS broadcast under `BROADCAST_SMS`. Keep consent and Google Play SMS permission requirements in mind. This is a visible personal relay feature, not a hidden SMS collector.
-3. Run the app. Enter your Railway public **HTTPS** URL with no query/fragment/path, privately paste the generated `android.json`, enter exact comma-separated allowed sender IDs, enable forwarding, save, and grant SMS permission. A blank pairing field retains a previously saved pairing. Pairing material is wrapped with Android Keystore AES-GCM before being stored in private preferences. Do not include it in screenshots or clipboard history.
-4. Send a synthetic mixed-case test such as `Ab7Cd9Ef2G`. The upload encrypts the exact UTF-8 string using the paired AES key and fresh GCM nonce, creates one UUID/timestamp, and sends only encrypted code and metadata. It disables redirects and uses a bounded upload queue and connection/read deadlines.
-5. Test an SMS from an explicitly approved sender. `OtpExtractor.extractApproved` checks exact sender identity before extracting. The explicit `OTP is` format supports 4–10 letters/digits containing at least one digit and preserves their case. It excludes 11-character SMS Retriever hashes and rejects malformed/ambiguous explicit candidates. Only numeric 4–8 digit fallback extraction is allowed outside that explicit format. Multiple candidate numbers require a service-specific parser rather than guessing.
-6. Background delivery is subject to Android process and SMS delivery rules. The receiver uses `goAsync()` with a nine-second pending-result deadline and a bounded upload executor. It has no durable encrypted retry storage. Add properly scoped WorkManager work with encrypted storage, original envelope reuse, TTL and bounded backoff if device background testing requires it. It must never postpone an OTP beyond its expiry or collect every SMS. Physical-device testing is required.
+Open the `android/` directory in Android Studio, or build with:
 
-The manual test field permits `[A-Za-z0-9]{4,32}`; automatic SMS extraction deliberately uses the narrower rules above. To expand a service's format, add an explicit allowlisted parser with synthetic tests. Do not use arbitrary alphanumeric matching: a hash or another message token can resemble an OTP.
+```bash
+android/gradlew -p android assembleDebug testDebugUnitTest lintDebug
+```
 
-Run pure JVM tests with a JDK and Kotlin CLI compiler:
+Requirements: JDK 17, Android SDK 36 and either `ANDROID_HOME` or an ignored `android/local.properties` containing `sdk.dir=/your/sdk/path`. The wrapper pins Gradle 8.14.3 and an official distribution checksum. The application ID is `com.acefolio.otprelay`, namespace `com.example.otprelay`, min SDK 26. `artifacts/OTPRelay-debug.apk` is the built local debug APK. Nothing was installed on a physical phone during the local-only phase.
+
+On your Android when ready:
+
+1. Install the APK, open it and confirm the preconfigured HTTPS URL.
+2. Use **Import private pairing file** to select your private `android.json`, or paste it into the secure field and save. The file is bounded to 4096 bytes, role/key/token validated and wrapped by Android Keystore AES-GCM in private preferences. Screenshots and backups/device transfers of this app’s data are disabled. The app never uploads full SMS bodies.
+3. Enter exact approved sender IDs, then explicitly enable forwarding, save and grant SMS permission. Forwarding is off until configured; denying permission turns it off. The allowlist checks exact sender identity before extraction. Sender names can still be spoofed by telecom senders, so this controls forwarding scope rather than authenticating the service.
+4. Use a synthetic code to test encryption and backend access. Automatic extraction takes the exact token immediately after `OTP is`, preserves case/leading zeros, accepts 4–10 letters/digits with at least one digit and refuses 11-character SMS Retriever hashes. Numeric fallback is 4–8 digits and rejects multiple candidate numbers. Manual upload/API support 4–32 letters/digits.
+
+Example: `Your easypaisa mobile account registration/login OTP is Ab7Cd9Ef2G OTP aur PIN ko mahfooz rakhein` extracts exactly `Ab7Cd9Ef2G`. There is no bare alphanumeric scanner or automatic forwarding without approved senders.
+
+The receiver uses `goAsync()` with a nine-second pending-result deadline, bounded upload queue, timeouts and fresh AES-GCM nonces. It is not a durable WorkManager retry system; a killed process or special SMS Retriever routing can still prevent delivery. For background reliability beyond this local integration, persist retries encrypted, preserve the exact original envelope and expire them within TTL. SMS permissions also require review for any Play Store distribution.
+
+The CLI extractor tests run actual Kotlin and the shared Java AES helper with synthetic data:
 
 ```bash
 scripts/test-android-extractor.sh
-# Or KOTLINC=/absolute/path/to/kotlinc scripts/test-android-extractor.sh
+# Set KOTLINC=/absolute/path/to/kotlinc if needed.
 ```
 
-The tests execute actual `OtpExtractor.kt` plus the upload path’s pure JVM AES-GCM helper, use only synthetic codes, and print just case/result counts. A public Node-generated vector is checked by Kotlin, Swift and Node to verify matching AAD and ciphertext. They cover the Easypaisa example, case, leading zeros, numeric formats, hashes, ambiguity and sender allowlists.
+## iOS app and AutoFill extension
 
-## iPhone app and Credential Provider Extension
+Open `ios/OTPRelay.xcodeproj`, scheme **OTPRelay**. No project creation is needed. Both the app and OTPProvider extension include Shared source, CryptoKit decryption, App Group/Keychain Sharing and AutoFill entitlements; `ProvidesOneTimeCodes` is enabled. Bundle IDs are `com.acefolio.otprelay` / `com.acefolio.otprelay.OTPProvider`, minimum iOS 18.
 
-1. Create an iOS SwiftUI App project `OTPRelay`, minimum iOS 18. Add `ios/OTPRelay/*.swift` to the application target.
-2. Add a Credential Provider Extension target `OTPProvider`. Replace its controller with `ios/OTPProvider/CredentialProviderViewController.swift`.
-3. Add **both** files under `ios/Shared/` (`RelayClient.swift`, `RelayPayload.swift`) to **both** targets. They use Foundation, Security and CryptoKit; there are no third-party crypto libraries.
-4. Merge the provided extension Info.plist dictionary. In particular set `ASCredentialProviderExtensionCapabilities > ProvidesOneTimeCodes = YES`.
-5. Enable **AutoFill Credential Provider**, **App Groups**, and **Keychain Sharing** on both targets. Change `RelayConfig.appGroup` to your App Group; replace `YOUR_TEAM_ID` and keychain group to match the full signed access group on both targets. Automatic signing may prefix it with the App Identifier Prefix.
-6. Build/sign on a physical iPhone. Enter the HTTPS root URL with no path/query/fragment/credentials. Privately paste `iphone.json` into the secure pairing field and save. The pairing (token and decryption key) is held in the shared Keychain with `AfterFirstUnlockThisDeviceOnly`. The URL is stored in the App Group preferences. Empty pairing input keeps the saved pairing.
-7. Use **Fetch latest OTP** with a fresh synthetic upload to verify exact case. This explicit test UI shows the code; production telemetry must not capture UI content. No code or pairing material is printed/logged by the client.
-8. Enable the OTPRelay provider in Settings → General → AutoFill & Passwords (setting labels can vary by iOS version). In a compatible OTP input, open the provider, then explicitly select **Fill**. Use Safari `autocomplete="one-time-code"` or a UIKit `.oneTimeCode` field for validation.
-
-The extension immediately GETs the latest ciphertext, authenticates AES-GCM against the exact pair/message/time/key AAD, validates expiry and characters, and passes **the original string** to `ASOneTimeCodeCredential(code:)`. It never parses an integer or changes case. It checks expiry again when Fill is tapped. The system decides whether a compatible field exposes the provider; no inline suggestion or automatic bypass is guaranteed. The current chooser uses the latest code rather than service-aware matching; retain explicit selection and add service context/confirmation before broader deployment.
-
-After AutoFill completes, the controller requests consumption in the callback unless the system marks the background callback expired. This acknowledges user selection, not successful authentication by the destination app/service. The network request is best effort because iOS can terminate extension execution. For reliable retries, persist **only the selected message ID** securely in the App Group, retry from the containing app, and clear local code caches. Never consume solely on fetching the chooser. Server TTL remains a fallback if acknowledgement is interrupted.
-
-The shared URLSession disables redirects, caching, cookies and credential storage. Immediate reads use a five-second timeout. The complete foreground app can add the authenticated long-poll route (25-second wait, ≥30-second client timeout), with cancellation/backoff and cache invalidation; do not run that wait indefinitely inside the extension. APNs is not implemented. Any later APNs integration must send only an opaque hint, and silent push cannot guarantee prompt wake-up.
-
-## Local Swift verification
-
-On a Mac with Swift/CryptoKit:
+Build on this Mac without using a work team:
 
 ```bash
-scripts/test-ios-payload.sh
+xcodebuild -project ios/OTPRelay.xcodeproj -scheme OTPRelay -configuration Debug \
+  -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ios/build \
+  CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO DEVELOPMENT_TEAM= AppIdentifierPrefix=LOCAL. build
+xcrun simctl install booted ios/build/Build/Products/Debug-iphonesimulator/OTPRelay.app
+xcrun simctl launch booted com.acefolio.otprelay
 ```
 
-These compiled Swift tests check exact mixed-case/leading-zero decryption, expiry, AAD tampering and empty responses, with synthetic data only. The entire provided Swift source can be typechecked against an installed iOS Simulator SDK, but this is not a substitute for a signed app, capability verification or physical-device AutoFill tests. Record those separately, along with end-to-end SMS timing.
+This uses ad-hoc **Sign to Run Locally** and a `LOCAL.` shared-Keychain prefix. No physical device or Apple Developer portal provisioning is performed. The built ZIP is a Simulator `.app`, not a physical-iPhone IPA. The Xcode project is committed; `ios/project.yml` is the source for regeneration with XcodeGen.
 
-Official interfaces: [Apple's AutoFill OTP guide](https://developer.apple.com/documentation/authenticationservices/providing-one-time-passcodes-to-autofill), [AutoFill completion callback semantics](https://developer.apple.com/documentation/authenticationservices/ascredentialproviderextensioncontext/completeonetimecoderequest(using:completionhandler:)), [Google's 11-character SMS Retriever hash format](https://developers.google.com/identity/sms-retriever/verify).
+In the app, import `provisioning/iphone.json`, confirm the HTTPS URL and fetch a fresh synthetic upload. Import uses a security-scoped file picker; pairing is stored in shared Keychain with `AfterFirstUnlockThisDeviceOnly`. No raw token/key is printed. Optional foreground listening uses 25-second authenticated long polling with cancellation on inactivity and jittered reconnection, not repeated short GET polling. The app hides an expired displayed code and lets you explicitly mark a selected test code used.
+
+The extension immediately fetches, authenticates GCM against pair/message/source/timestamp/key AAD, checks expiry and passes the **original string** to `ASOneTimeCodeCredential(code:)` after explicit selection. It never parses an integer or changes case. Refresh cancels stale requests and generation checks prevent an old response overwriting a newer one. Consumption queues only ID/expiry for foreground retries; no plaintext code is put in preferences. Extension execution can end before acknowledgement finishes, so TTL remains the final boundary.
+
+For a real iPhone later, use **your own** Apple Developer signing setup. Set `DEVELOPMENT_TEAM` and register the app/extension IDs and `group.com.acefolio.otprelay`, with matching AutoFill, App Group and shared Keychain capabilities. Physical Keychain prefixes expand from your personal signing profile; they are not `LOCAL.`. Work signing teams can expose provisioning records to administrators; this local project does not attempt to hide activity from a signing team. Enable your provider under iOS AutoFill settings and test a compatible field such as Safari `autocomplete="one-time-code"`. The system controls provider availability and suggestion presentation.
+
+The chooser uses the latest code with explicit selection. Service-specific confirmation/matching is a remaining hardening task before broader distribution. APNs is not implemented; it must never be required for valid authenticated GET retrieval.
+
+## Verification
+
+```bash
+scripts/test-ios-payload.sh          # compiled Swift, synthetic fixture only
+scripts/test-ios-live.sh             # actual HTTPS fetch/decryption/consume, private local pairing
+scripts/test-ios-client-live.sh      # hosted Simulator test of actual shared Keychain/network client
+node scripts/verify-deployment.mjs   # full deployed API smoke, safe status/timing report
+node scripts/upload-synthetic.mjs   # fresh synthetic encrypted code for the paired app
+```
+
+A hosted Simulator test target `OTPRelayIntegrationTests` also exercises the actual shared `RelayClient`, local shared Keychain and live HTTPS service. It skips unless `relay-private-test.json` is staged in the app’s private Documents directory. The test deletes that temporary import file after saving pairing to the local Simulator Keychain. It contains no real SMS and logs no code/credential. Build-for-testing first, upload a fresh synthetic code, then execute test-without-building before its 90-second expiry. The latest executed result is recorded in [verification](verification.md).
+
+Physical Android SMS → iPhone AutoFill selection and the <15-second target remain unmeasured. Configure approved sender IDs and personal phone signing when you are ready for that phase.
+
+Official references: [Apple AutoFill OTP guide](https://developer.apple.com/documentation/authenticationservices/providing-one-time-passcodes-to-autofill), [completion callback semantics](https://developer.apple.com/documentation/authenticationservices/ascredentialproviderextensioncontext/completeonetimecoderequest(using:completionhandler:)), [Google SMS Retriever hash format](https://developers.google.com/identity/sms-retriever/verify).

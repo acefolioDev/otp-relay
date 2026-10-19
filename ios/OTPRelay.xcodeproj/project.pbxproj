@@ -1,0 +1,557 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		10E7C683CF4AD889D4E5E9AF /* OTPProvider.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 9455CC3349033843E047B2BD /* OTPProvider.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		5C05AB250230E3B6AC4B87C2 /* RelayClientIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DD811E40E52CDF194483E57 /* RelayClientIntegrationTests.swift */; };
+		65322FAF33BA91F9A7BF2EB7 /* RelayPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52C7884DB5747C1E5EB16BC4 /* RelayPayload.swift */; };
+		761370FCCF41EDC8C2007145 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D85BAA02125EF55F1CB9F6A /* ContentView.swift */; };
+		861745C27296A675AA666769 /* OTPRelayApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F74C3C6D2B131BB3F1617D7 /* OTPRelayApp.swift */; };
+		A58E371131CFF0702572F279 /* RelayClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E1054C1312572D230489D55 /* RelayClient.swift */; };
+		B4004F5220F33395A949876F /* CredentialProviderViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E99741F9FD116089BCE8281 /* CredentialProviderViewController.swift */; };
+		B9C495EEB6BF148B5F019A29 /* RelayClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E1054C1312572D230489D55 /* RelayClient.swift */; };
+		CDD09B8CFFC2E08492B6C3E7 /* RelayPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52C7884DB5747C1E5EB16BC4 /* RelayPayload.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		16FA16CD24A65D1A1C17E6A0 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 69845AC05C96FA040A37AAB4 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D2438F1AC07CEBE21E03D8AE;
+			remoteInfo = OTPProvider;
+		};
+		FA2925F200EFBBF0B5281780 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 69845AC05C96FA040A37AAB4 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A548A00C77B00E7418A2D880;
+			remoteInfo = OTPRelay;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		DB80090DBB965B830B2A14EB /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				10E7C683CF4AD889D4E5E9AF /* OTPProvider.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		1F74C3C6D2B131BB3F1617D7 /* OTPRelayApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OTPRelayApp.swift; sourceTree = "<group>"; };
+		52C7884DB5747C1E5EB16BC4 /* RelayPayload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelayPayload.swift; sourceTree = "<group>"; };
+		5D85BAA02125EF55F1CB9F6A /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		5E99741F9FD116089BCE8281 /* CredentialProviderViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CredentialProviderViewController.swift; sourceTree = "<group>"; };
+		8DD811E40E52CDF194483E57 /* RelayClientIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelayClientIntegrationTests.swift; sourceTree = "<group>"; };
+		8E1054C1312572D230489D55 /* RelayClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelayClient.swift; sourceTree = "<group>"; };
+		9455CC3349033843E047B2BD /* OTPProvider.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = OTPProvider.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		971CB6C01B907899423C2433 /* OTPRelayIntegrationTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = OTPRelayIntegrationTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		EC2D3850CA12B5DF3707D7A0 /* OTPRelay.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = OTPRelay.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		4A72F51BB9E0FA4E83C9723A = {
+			isa = PBXGroup;
+			children = (
+				B34A52CCBC642C641BA761DC /* Integration */,
+				9ADF97C83E1735543E3F3DC8 /* OTPProvider */,
+				608EBDAB5AC5131B0A2A091C /* OTPRelay */,
+				9F44C28B38268D2B5653EE08 /* Shared */,
+				89019DDD385B72F591628004 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		608EBDAB5AC5131B0A2A091C /* OTPRelay */ = {
+			isa = PBXGroup;
+			children = (
+				5D85BAA02125EF55F1CB9F6A /* ContentView.swift */,
+				1F74C3C6D2B131BB3F1617D7 /* OTPRelayApp.swift */,
+			);
+			path = OTPRelay;
+			sourceTree = "<group>";
+		};
+		89019DDD385B72F591628004 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				9455CC3349033843E047B2BD /* OTPProvider.appex */,
+				EC2D3850CA12B5DF3707D7A0 /* OTPRelay.app */,
+				971CB6C01B907899423C2433 /* OTPRelayIntegrationTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		9ADF97C83E1735543E3F3DC8 /* OTPProvider */ = {
+			isa = PBXGroup;
+			children = (
+				5E99741F9FD116089BCE8281 /* CredentialProviderViewController.swift */,
+			);
+			path = OTPProvider;
+			sourceTree = "<group>";
+		};
+		9F44C28B38268D2B5653EE08 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				8E1054C1312572D230489D55 /* RelayClient.swift */,
+				52C7884DB5747C1E5EB16BC4 /* RelayPayload.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		B34A52CCBC642C641BA761DC /* Integration */ = {
+			isa = PBXGroup;
+			children = (
+				8DD811E40E52CDF194483E57 /* RelayClientIntegrationTests.swift */,
+			);
+			name = Integration;
+			path = tests/Integration;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		9CF65CB0D59E72BB82932FA1 /* OTPRelayIntegrationTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 111C54CF617E3EB95D029A41 /* Build configuration list for PBXNativeTarget "OTPRelayIntegrationTests" */;
+			buildPhases = (
+				7602AB0FDDFB7E5878C7F4AF /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				96F03BF460C3CF03C9DCABB0 /* PBXTargetDependency */,
+			);
+			name = OTPRelayIntegrationTests;
+			packageProductDependencies = (
+			);
+			productName = OTPRelayIntegrationTests;
+			productReference = 971CB6C01B907899423C2433 /* OTPRelayIntegrationTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		A548A00C77B00E7418A2D880 /* OTPRelay */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B9C4B6110ECDF4FE56C333FB /* Build configuration list for PBXNativeTarget "OTPRelay" */;
+			buildPhases = (
+				B76F117F46EB31B17F847319 /* Sources */,
+				DB80090DBB965B830B2A14EB /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				4A80B82C2D4A1A4E5DDF0A4A /* PBXTargetDependency */,
+			);
+			name = OTPRelay;
+			packageProductDependencies = (
+			);
+			productName = OTPRelay;
+			productReference = EC2D3850CA12B5DF3707D7A0 /* OTPRelay.app */;
+			productType = "com.apple.product-type.application";
+		};
+		D2438F1AC07CEBE21E03D8AE /* OTPProvider */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4F82CCBEFD413A4EC4471DB9 /* Build configuration list for PBXNativeTarget "OTPProvider" */;
+			buildPhases = (
+				CA849739AF5B8373A2EAD84F /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = OTPProvider;
+			packageProductDependencies = (
+			);
+			productName = OTPProvider;
+			productReference = 9455CC3349033843E047B2BD /* OTPProvider.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		69845AC05C96FA040A37AAB4 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					9CF65CB0D59E72BB82932FA1 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+					A548A00C77B00E7418A2D880 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+					D2438F1AC07CEBE21E03D8AE = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 4ED0971CB106C06D887CC8E6 /* Build configuration list for PBXProject "OTPRelay" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 4A72F51BB9E0FA4E83C9723A;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 89019DDD385B72F591628004 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A548A00C77B00E7418A2D880 /* OTPRelay */,
+				D2438F1AC07CEBE21E03D8AE /* OTPProvider */,
+				9CF65CB0D59E72BB82932FA1 /* OTPRelayIntegrationTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		7602AB0FDDFB7E5878C7F4AF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5C05AB250230E3B6AC4B87C2 /* RelayClientIntegrationTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B76F117F46EB31B17F847319 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				761370FCCF41EDC8C2007145 /* ContentView.swift in Sources */,
+				861745C27296A675AA666769 /* OTPRelayApp.swift in Sources */,
+				B9C495EEB6BF148B5F019A29 /* RelayClient.swift in Sources */,
+				65322FAF33BA91F9A7BF2EB7 /* RelayPayload.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CA849739AF5B8373A2EAD84F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B4004F5220F33395A949876F /* CredentialProviderViewController.swift in Sources */,
+				A58E371131CFF0702572F279 /* RelayClient.swift in Sources */,
+				CDD09B8CFFC2E08492B6C3E7 /* RelayPayload.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		4A80B82C2D4A1A4E5DDF0A4A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = D2438F1AC07CEBE21E03D8AE /* OTPProvider */;
+			targetProxy = 16FA16CD24A65D1A1C17E6A0 /* PBXContainerItemProxy */;
+		};
+		96F03BF460C3CF03C9DCABB0 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A548A00C77B00E7418A2D880 /* OTPRelay */;
+			targetProxy = FA2925F200EFBBF0B5281780 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		26136A2841E9685190B7E250 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = OTPProvider/OTPProvider.entitlements;
+				INFOPLIST_FILE = "OTPProvider/Extension-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.acefolio.otprelay.OTPProvider;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		372C11353167C8BEAF90C50D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = OTPProvider/OTPProvider.entitlements;
+				INFOPLIST_FILE = "OTPProvider/Extension-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.acefolio.otprelay.OTPProvider;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		527E9ABF63E81EA887DE8226 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = OTPRelay/OTPRelay.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = OTPRelay/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "OTP Relay";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.acefolio.otprelay;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		795CDCCA9DEC71F92D35DBE4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.acefolio.otprelay.IntegrationTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/OTPRelay.app/OTPRelay";
+			};
+			name = Release;
+		};
+		7FAF64C77872C0149A85471F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				RELAY_APP_GROUP = group.com.acefolio.otprelay;
+				RELAY_KEYCHAIN_SUFFIX = com.acefolio.otprelay.shared;
+				RELAY_SIGNING_PREFIX = "$(AppIdentifierPrefix)";
+				"RELAY_SIGNING_PREFIX[sdk=iphonesimulator*]" = LOCAL.;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		8EFA3F4D64D343A47CA73C83 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.acefolio.otprelay.IntegrationTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/OTPRelay.app/OTPRelay";
+			};
+			name = Debug;
+		};
+		9FCD6AC177C2B0D016DEF2D1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				RELAY_APP_GROUP = group.com.acefolio.otprelay;
+				RELAY_KEYCHAIN_SUFFIX = com.acefolio.otprelay.shared;
+				RELAY_SIGNING_PREFIX = "$(AppIdentifierPrefix)";
+				"RELAY_SIGNING_PREFIX[sdk=iphonesimulator*]" = LOCAL.;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C98FBDA6648289820A65FD48 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = OTPRelay/OTPRelay.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = OTPRelay/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "OTP Relay";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.acefolio.otprelay;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		111C54CF617E3EB95D029A41 /* Build configuration list for PBXNativeTarget "OTPRelayIntegrationTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8EFA3F4D64D343A47CA73C83 /* Debug */,
+				795CDCCA9DEC71F92D35DBE4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		4ED0971CB106C06D887CC8E6 /* Build configuration list for PBXProject "OTPRelay" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9FCD6AC177C2B0D016DEF2D1 /* Debug */,
+				7FAF64C77872C0149A85471F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		4F82CCBEFD413A4EC4471DB9 /* Build configuration list for PBXNativeTarget "OTPProvider" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				26136A2841E9685190B7E250 /* Debug */,
+				372C11353167C8BEAF90C50D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		B9C4B6110ECDF4FE56C333FB /* Build configuration list for PBXNativeTarget "OTPRelay" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C98FBDA6648289820A65FD48 /* Debug */,
+				527E9ABF63E81EA887DE8226 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 69845AC05C96FA040A37AAB4 /* Project object */;
+}

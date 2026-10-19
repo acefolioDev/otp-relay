@@ -1,6 +1,6 @@
 # Verification — 19 October 2026
 
-## Checks actually executed
+## Initial backend checks actually executed
 
 Environment: local macOS x86_64, Node.js v22.23.1 / npm 10.9.8, real Redis 7.4.7 built locally and bound to loopback. Docker CLI was available but its daemon was not running, so no container image build was performed. The published Railway JSON schema was downloaded and used for configuration validation; this does not assert a successful Railway build/deployment.
 
@@ -41,11 +41,25 @@ Overall measured throughput was **1,143.38 HTTP requests/second**, or 381.13 com
 
 Long polls deliberately include waiting and were tested functionally, not included in this immediate-route latency sample. Their telemetry is marked separately from immediate GETs. The local sample meets the immediate-route p95 <200ms goal in this narrow environment; regional latency, Redis contention, quotas, cold starts and realistic multi-pair concurrency still need testing after deployment.
 
+## Subsequent deployment and mobile verification
+
+The backend has now successfully deployed on Railway at **https://otp-relay-production-a3b3.up.railway.app**. Both backend and private Redis run in Singapore; Railway built the actual Docker image and its `/ready` gate passed. [Safe live HTTP timings/statuses](deployment-verification.json) and [deployment settings](deployment.md) document the result.
+
+Additional executed checks:
+
+- Deployed API smoke: HTTPS, health, Redis readiness, unauthenticated rejection, ciphertext upload, deduplication, exact-case local decryption, consumption, repeated consumption and empty retrieval all passed.
+- Native Swift HTTPS smoke using the actual shared decoder: passed.
+- Android Gradle `assembleDebug testDebugUnitTest lintDebug`: passed; **5 JUnit tests**, **0 lint errors**, 2 toolchain/target-version advisory warnings. Debug APK created locally.
+- Xcode app plus embedded AutoFill extension build: passed with **Sign to Run Locally**, empty development team and `LOCAL.` Simulator signing prefix. Simulator app installed and launched successfully.
+- Hosted iOS Simulator XCTest using the actual app's shared Keychain, shared `RelayClient`, real Railway HTTPS, exact-case decryption and consumption: **1 test passed, 0 failures**, test body 0.858 seconds. This is a synthetic local-app test, not SMS-to-AutoFill delivery timing. Reproduce with `scripts/test-ios-client-live.sh` on a booted Simulator and the private local pairing files.
+- Backend Vitest re-run after mobile changes: **35 tests passed**, 4 files; build, typecheck, 17 Swift payload tests, 29 Kotlin extractor cases and the Kotlin crypto vector all passed again.
+
+No actual credential or AES key is embedded in the APK, Simulator app or committed source. Temporary Simulator import JSON was removed after Keychain import. Mobile changes and artifacts remain on this Mac under the user's local-only privacy instruction. No work signing team was used, no Apple Developer provisioning updates were requested, and no physical-device installation was performed.
+
 ## Not performed
 
-- Actual Railway deployment/public HTTPS smoke test or container build.
-- Signed mobile builds or physical-device SMS reception/AutoFill testing.
+- Physical-device signed iPhone installation or real SMS reception/AutoFill testing.
 - APNs integration/background delivery measurement.
 - A measured Android SMS → iPhone AutoFill result under 15 seconds.
 
-Deploy the backend first, then use the README's **Deployment handoff** section to provide the HTTPS URL and public configuration identifiers for the next mobile integration phase.
+Backend deployment and local mobile integration are complete. The next physical-device phase requires your own Apple signing setup and exact approved SMS sender IDs; see [deployment and mobile handoff](deployment.md).

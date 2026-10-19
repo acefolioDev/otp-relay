@@ -55,14 +55,20 @@ final class CredentialProviderViewController: ASCredentialProviderViewController
     }
 
     private var selectedCode: RelayOTP?
+    private var fetchTask: URLSessionDataTask?
+    private var fetchGeneration = UUID()
+    deinit { fetchTask?.cancel() }
 
     @objc private func loadCode() {
+        fetchTask?.cancel()
+        let generation = UUID()
+        fetchGeneration = generation
         selectedCode = nil
         codeButton.isEnabled = false
         statusLabel.text = "Fetching code over Wi-Fi…"
-        RelayClient.fetch { [weak self] result in
+        fetchTask = RelayClient.fetch { [weak self] result in
             DispatchQueue.main.async {
-                guard let self = self else { return }
+                guard let self = self, self.fetchGeneration == generation else { return }
                 switch result {
                 case .success(let code):
                     self.selectedCode = code

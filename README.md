@@ -4,7 +4,7 @@ A Node.js 22, TypeScript and Fastify backend for relaying **your own** Android O
 
 Android encrypts the exact OTP string locally with AES-256-GCM. The iPhone decrypts locally and supplies the string to the supported iOS 18+ AutoFill Credential Provider interface after explicit selection. Railway receives ciphertext, metadata and bearer credentials over TLS; it never receives the OTP encryption key. Alphanumeric codes and leading zeros retain their exact case and characters.
 
-The backend is implemented and locally tested. **No Railway deployment or real-phone delivery benchmark has been performed.** The supplied mobile source still needs Android Studio/Xcode projects, signing, device provisioning and physical-device verification.
+The backend is **deployed and verified** at [otp-relay-production-a3b3.up.railway.app](https://otp-relay-production-a3b3.up.railway.app). Android and Xcode build projects are included with that URL configured; the Android APK and locally signed iOS Simulator app/extension build successfully. [Live deployment, local artifacts and verification](docs/deployment.md). Physical-device SMS → AutoFill latency remains unmeasured; actual iPhone installation needs your own Apple Developer signing setup.
 
 ```mermaid
 sequenceDiagram
@@ -46,7 +46,7 @@ android/                     Kotlin sender allowlist, extractor, encryption, UI
 ios/                        Swift decryption, app and AutoFill extension source
  docs/                       mobile setup, security protocol, verification results
 Dockerfile                   multi-stage build, unprivileged production runtime
-railway.json                 readiness gate, restart policy, shutdown draining
+railway.json                 legacy reference; current service configured in Railway settings
 compose.yaml                 loopback-only development Redis, no persistence
 .github/workflows/ci.yml      typecheck, real-Redis tests, build, runtime audit
 ```
@@ -161,7 +161,7 @@ Returns `200 {"available":false}` or:
 
 Fetching never consumes. Use an immediate GET when the AutoFill extension opens. Foreground apps can use `?waitSeconds=25&afterId=LAST_SEEN_UUID` to wait for a different code; omit `afterId` to wait when empty. A timeout returns `available:false`, even if the already-seen code still exists. A plain GET always returns that valid latest code. Long polls use a shared Redis Pub/Sub wakeup and a final authenticated Redis read, so any replica can wake a request; the durable GET remains authoritative if a hint is missed. Registering the listener before reading avoids an upload/read subscription race.
 
-The provided iOS example uses immediate GETs. Wiring foreground long polling into a complete app is a remaining mobile task. Reconnect foreground waits with jitter/backoff after errors and allow at least 30 seconds for the long-poll response. Never keep the AutoFill extension running as a background listener.
+The iOS app includes an optional foreground listener using 25-second long polls and a 30-second request timeout, cancellation when inactive, and jittered retries. The extension uses only immediate GETs. Never keep the AutoFill extension running as a background listener.
 
 ### `POST /api/v1/otp/:id/consume` — iPhone only
 
@@ -212,7 +212,7 @@ Your easypaisa mobile account registration/login OTP is Ab7Cd9Ef2G OTP aur PIN k
 
 It extracts `Ab7Cd9Ef2G` exactly. It never scans for arbitrary alphanumeric strings or forwards full SMS text. Adapt parsing only for approved services; the backend and manual test field support 4–32 character codes. Real SMS Retriever routing or Android background restrictions can prevent a general SMS listener from receiving a message.
 
-The Swift app and extension decrypt locally, preserve the string and expiry, and invoke `ASOneTimeCodeCredential(code:)` after explicit selection. Consumption is a best-effort request in the AutoFill completion callback; iOS may end the extension before it finishes, so TTL remains the final expiration boundary. This callback acknowledges selection, not whether the target service accepted the OTP. No account matching or iCloud dependency exists.
+The Swift app and extension decrypt locally, preserve the string and expiry, and invoke `ASOneTimeCodeCredential(code:)` after explicit selection. Consumption is requested in the AutoFill completion callback; only message ID/expiry are queued for retries when the containing app becomes active. iOS may end the extension before it finishes, so TTL remains the final expiration boundary. This callback acknowledges selection, not whether the target service accepted the OTP. No account matching or iCloud dependency exists.
 
 ## Railway deployment and Redis setup
 
@@ -221,7 +221,7 @@ The Swift app and extension decrypt locally, preserve the string and expiry, and
 3. Use Redis without RDB/AOF/backups when pending OTPs must not survive Redis restarts (`save ""`, `appendonly no`). Backend restarts remain safe because Redis is external. If managed persistence/backups are enabled, ciphertext can outlive logical expiry on disk; establish a retention policy. TTL/deletion is logical invalidation, not guaranteed physical media erasure.
 4. On a trusted local computer, run `npm run provision`. Privately import `android.json` on Android and `iphone.json` on iPhone. Do **not** upload these files or their `encryptionKey` to Railway or GitHub. Set only the values from `server.env` in Railway. In Railway's individual variable editor, paste the raw JSON array for `PAIRINGS_JSON` without surrounding shell quotes.
 5. Set `NODE_ENV=production`, `REDIS_URL=${{Redis.REDIS_URL}}` (replace `Redis` with the actual service name), `PAIRINGS_JSON`, and `METRICS_TOKEN_HASH`. Keep `OTP_TTL_SECONDS=90`, `LOG_LEVEL=info`, `DEV_ALLOW_PLAINTEXT_OTP=false`. Railway supplies `PORT`. Confirm the Redis URL uses the private `*.railway.internal` hostname; remove Redis public TCP proxy exposure. Never substitute a publicly reachable plaintext Redis URL.
-6. Deploy. Railway uses the root Dockerfile: `npm ci`, TypeScript production build, prune dev dependencies, unprivileged Node runtime. `railway.json` gates traffic on `/ready`, uses up to 10 failure restarts and allows 10 seconds for draining; the application has an 8-second shutdown deadline. SIGTERM/SIGINT stop long polls and close Redis connections.
+6. In the backend service Settings, use the root Dockerfile (automatically detected), set Start Command to `node dist/server.js`, Healthcheck Path to `/ready`, Healthcheck Timeout to 30 seconds, Restart Policy to On Failure with 10 retries, enable Teardown with Draining 10 seconds/Overlap 0, and leave Serverless off. Railway currently deprecates legacy Config as Code for new services; `railway.json` is a validated legacy reference, so verify the actual service settings. The Docker build runs `npm ci`, TypeScript compilation and dependency pruning, then uses an unprivileged Node runtime. SIGTERM/SIGINT close long polls and Redis within an 8-second application deadline.
 7. Generate the backend's **public HTTPS domain** under service networking. Keep backend ingress behind Railway TLS termination. The application trusts exactly the nearest proxy hop for HTTPS/IP headers; direct untrusted access to the Node listener must not bypass that boundary. Additional proxies need an explicitly reviewed trust policy.
 8. Verify `/health` and `/ready` over the public HTTPS domain. An uncredentialed `/api/v1/otp/latest` must return `401`. Check that no device secrets/codes appear in service logs. Railway's deploy readiness check is not continuous monitoring; configure an external readiness monitor.
 9. Upload a fresh **synthetic** encrypted code, retrieve/decrypt it, consume it, and verify that the next GET is empty. Provision both mobile clients with the HTTPS domain and test allowlisted SMS → AutoFill on physical devices. Measure that path before making a delivery claim.
@@ -236,7 +236,7 @@ git status
 git push -u origin main
 ```
 
-No force push or global Git configuration is used. Railway access and an actual successful deployment are required before a deployed URL can be reported.
+No force push or global Git configuration is used. This repository’s backend is already deployed; mobile changes made after the local-only privacy request remain on this Mac until you choose to publish them. The GitHub repository is public.
 
 ## Security model
 
@@ -291,7 +291,7 @@ Redis commands fail within a bounded deadline, do not queue while disconnected a
 - [ ] Transfer only the intended private pairing material to each device; verify sharing/signing; delete transport copies.
 - [ ] Test actual approved senders and confirm exact mixed-case/leading-zero codes through supported AutoFill fields.
 - [ ] Add durable encrypted Android retry work with original message IDs/envelopes and expiry if required by device background behavior.
-- [ ] Wire foreground long polling, connection cancellation/backoff and reliable consumption retry/cache invalidation in the complete iOS app.
+- [x] Wire foreground long polling, cancellation/backoff, expiry-aware display and ID-only consumption retries in the iOS app.
 - [ ] Add service-specific confirmation/matching before offering a code to an unrelated requesting service.
 - [ ] Evaluate optional APNs with opaque hints; never rely on it for correctness.
 - [ ] Monitor readiness, quota errors, Redis memory, server latency and mobile segment latency; rehearse rotation/revocation and Redis loss.
@@ -301,7 +301,7 @@ Official references: [Fastify logging](https://fastify.dev/docs/latest/Reference
 
 ## Deployment handoff: what to send afterward
 
-Deploy the **backend first** using the Railway steps above. After deployment, send:
+The backend has now been deployed and both mobile build projects use its actual HTTPS URL. For later physical-device setup, prepare:
 
 1. The public **HTTPS backend URL** (for example `https://…up.railway.app`).
 2. The status/output of `GET /health` and `GET /ready`. If deployment failed, the sanitized build/runtime error and which step failed.
@@ -311,4 +311,4 @@ Deploy the **backend first** using the Railway steps above. After deployment, se
 
 Keep the generated device tokens, AES keys, `android.json`, `iphone.json`, and operator metrics token in your private local provisioning files; enter/import them directly on the appropriate devices or environment. They are not needed in chat. Railway needs only `server.env` values and the private Redis variable reference. There is no mobile build or real-device latency claim pending this deployment handoff.
 
-With that information, the next phase is to configure the mobile clients for the actual deployed URL, finish app project/signing setup, verify the sender allowlist and exact-case AutoFill behavior, and measure real end-to-end delivery.
+The local mobile build phase is complete. For actual phones, import each device’s own private pairing file, choose your personal iOS signing team, configure exact approved SMS sender IDs, verify the supported AutoFill chooser and measure end-to-end delivery. No work signing team was used for the local Simulator build.

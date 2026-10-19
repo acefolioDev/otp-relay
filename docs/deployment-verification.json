@@ -1,0 +1,82 @@
+{
+  "verifiedAt": "2026-10-19T12:44:20.101Z",
+  "baseURL": "https://otp-relay-production-a3b3.up.railway.app",
+  "result": "passed",
+  "checks": [
+    "public HTTPS",
+    "health",
+    "Redis readiness",
+    "authentication required",
+    "encrypted upload",
+    "deduplication",
+    "exact-case local decryption",
+    "atomic consumption",
+    "idempotent acknowledgement",
+    "empty after consumption"
+  ],
+  "results": [
+    {
+      "method": "GET",
+      "route": "/health",
+      "status": 200,
+      "httpDurationMs": 546.39,
+      "serverTiming": "app;dur=0.21"
+    },
+    {
+      "method": "GET",
+      "route": "/ready",
+      "status": 200,
+      "httpDurationMs": 341.31,
+      "serverTiming": "app;dur=1.45"
+    },
+    {
+      "method": "GET",
+      "route": "/api/v1/otp/latest",
+      "status": 401,
+      "httpDurationMs": 141.37,
+      "serverTiming": "app;dur=2.40"
+    },
+    {
+      "method": "POST",
+      "route": "/api/v1/otp",
+      "status": 201,
+      "httpDurationMs": 123.55,
+      "serverTiming": "app;dur=5.91"
+    },
+    {
+      "method": "POST",
+      "route": "/api/v1/otp",
+      "status": 200,
+      "httpDurationMs": 130.39,
+      "serverTiming": "app;dur=3.71"
+    },
+    {
+      "method": "GET",
+      "route": "/api/v1/otp/latest",
+      "status": 200,
+      "httpDurationMs": 119.17,
+      "serverTiming": "app;dur=3.10"
+    },
+    {
+      "method": "POST",
+      "route": "/api/v1/otp/:id/consume",
+      "status": 204,
+      "httpDurationMs": 132.65,
+      "serverTiming": "app;dur=3.47"
+    },
+    {
+      "method": "POST",
+      "route": "/api/v1/otp/:id/consume",
+      "status": 204,
+      "httpDurationMs": 120.51,
+      "serverTiming": "app;dur=2.92"
+    },
+    {
+      "method": "GET",
+      "route": "/api/v1/otp/latest",
+      "status": 200,
+      "httpDurationMs": 127.47,
+      "serverTiming": "app;dur=4.26"
+    }
+  ]
+}

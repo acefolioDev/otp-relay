@@ -1,0 +1,107 @@
+name: OTPRelay
+options:
+  bundleIdPrefix: com.acefolio
+  deploymentTarget:
+    iOS: '18.0'
+  xcodeVersion: '16.0'
+settings:
+  base:
+    SWIFT_VERSION: '5.0'
+    IPHONEOS_DEPLOYMENT_TARGET: '18.0'
+    CODE_SIGN_STYLE: Automatic
+    CURRENT_PROJECT_VERSION: 1
+    MARKETING_VERSION: 1.0.0
+    TARGETED_DEVICE_FAMILY: '1,2'
+    RELAY_APP_GROUP: group.com.acefolio.otprelay
+    RELAY_KEYCHAIN_SUFFIX: com.acefolio.otprelay.shared
+    RELAY_SIGNING_PREFIX: $(AppIdentifierPrefix)
+    'RELAY_SIGNING_PREFIX[sdk=iphonesimulator*]': LOCAL.
+    DEVELOPMENT_TEAM: ''
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: YES
+targets:
+  OTPRelay:
+    type: application
+    platform: iOS
+    sources:
+      - path: OTPRelay
+        excludes: ['Info.plist', '*.entitlements']
+      - path: Shared
+    info:
+      path: OTPRelay/Info.plist
+      properties:
+        CFBundleDisplayName: OTP Relay
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
+        RelayBaseURL: https://otp-relay-production-a3b3.up.railway.app
+        RelayAppGroup: $(RELAY_APP_GROUP)
+        RelayKeychainGroup: $(RELAY_SIGNING_PREFIX)$(RELAY_KEYCHAIN_SUFFIX)
+    entitlements:
+      path: OTPRelay/OTPRelay.entitlements
+      properties:
+        application-identifier: $(RELAY_SIGNING_PREFIX)$(PRODUCT_BUNDLE_IDENTIFIER)
+        com.apple.developer.authentication-services.autofill-credential-provider: true
+        com.apple.security.application-groups: ['$(RELAY_APP_GROUP)']
+        keychain-access-groups: ['$(RELAY_SIGNING_PREFIX)$(RELAY_KEYCHAIN_SUFFIX)']
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.acefolio.otprelay
+        INFOPLIST_KEY_CFBundleDisplayName: OTP Relay
+    dependencies:
+      - target: OTPProvider
+        embed: true
+        codeSign: true
+  OTPProvider:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: OTPProvider
+        excludes: ['Extension-Info.plist', '*.entitlements']
+      - path: Shared
+    info:
+      path: OTPProvider/Extension-Info.plist
+      properties:
+        CFBundleDisplayName: OTP Relay Codes
+        RelayBaseURL: https://otp-relay-production-a3b3.up.railway.app
+        RelayAppGroup: $(RELAY_APP_GROUP)
+        RelayKeychainGroup: $(RELAY_SIGNING_PREFIX)$(RELAY_KEYCHAIN_SUFFIX)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.authentication-services-credential-provider-ui
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).CredentialProviderViewController
+          NSExtensionAttributes:
+            ASCredentialProviderExtensionCapabilities:
+              ProvidesOneTimeCodes: true
+    entitlements:
+      path: OTPProvider/OTPProvider.entitlements
+      properties:
+        application-identifier: $(RELAY_SIGNING_PREFIX)$(PRODUCT_BUNDLE_IDENTIFIER)
+        com.apple.developer.authentication-services.autofill-credential-provider: true
+        com.apple.security.application-groups: ['$(RELAY_APP_GROUP)']
+        keychain-access-groups: ['$(RELAY_SIGNING_PREFIX)$(RELAY_KEYCHAIN_SUFFIX)']
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.acefolio.otprelay.OTPProvider
+        APPLICATION_EXTENSION_API_ONLY: YES
+        SKIP_INSTALL: YES
+  OTPRelayIntegrationTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources: [tests/Integration]
+    dependencies:
+      - target: OTPRelay
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.acefolio.otprelay.IntegrationTests
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  OTPRelay:
+    build:
+      targets:
+        OTPRelay: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets: [OTPRelayIntegrationTests]
+    archive:
+      config: Release

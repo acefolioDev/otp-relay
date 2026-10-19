@@ -1,11 +1,12 @@
 import Foundation
 import Security
 
-// IMPORTANT: Change BOTH values to match your signing team and Xcode capabilities.
+// Public build settings must match the entitlements on both app and extension targets.
 enum RelayConfig {
-    static let appGroup = "group.com.example.otprelay"
-    static let keychainGroup = "YOUR_TEAM_ID.com.example.otprelay.shared"
-    static var settings: UserDefaults { UserDefaults(suiteName: appGroup)! }
+    static let appGroup = Bundle.main.object(forInfoDictionaryKey: "RelayAppGroup") as? String ?? "group.com.acefolio.otprelay"
+    static let keychainGroup = Bundle.main.object(forInfoDictionaryKey: "RelayKeychainGroup") as? String ?? "com.acefolio.otprelay.shared"
+    static let defaultServerURL = Bundle.main.object(forInfoDictionaryKey: "RelayBaseURL") as? String ?? "https://otp-relay-production-a3b3.up.railway.app"
+    static var settings: UserDefaults { UserDefaults(suiteName: appGroup) ?? .standard }
 }
 
 enum RelayToken {
@@ -19,14 +20,15 @@ enum RelayToken {
     }
 
     static func save(_ token: String) throws {
-        SecItemDelete(query as CFDictionary)
-        var add = query
-        add[kSecValueData as String] = Data(token.utf8)
-        add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
-        let status = SecItemAdd(add as CFDictionary, nil)
-        guard status == errSecSuccess else {
-            throw NSError(domain: NSOSStatusErrorDomain, code: Int(status))
+        let attributes: [String: Any] = [kSecValueData as String: Data(token.utf8),
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly]
+        var status = SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
+        if status == errSecItemNotFound {
+            var add = query
+            attributes.forEach { add[$0.key] = $0.value }
+            status = SecItemAdd(add as CFDictionary, nil)
         }
+        guard status == errSecSuccess else { throw NSError(domain: NSOSStatusErrorDomain, code: Int(status)) }
     }
 
     static func read() -> String? {
@@ -56,7 +58,7 @@ enum RelayClient {
         return URLSession(configuration: configuration, delegate: RelaySessionDelegate(), delegateQueue: nil)
     }()
     private static func request(path: String, method: String = "GET") throws -> (URLRequest, RelayPairing) {
-        let host = (RelayConfig.settings.string(forKey: "serverURL") ?? "")
+        let host = (RelayConfig.settings.string(forKey: "serverURL") ?? RelayConfig.defaultServerURL)
             .trimmingCharacters(in: .whitespacesAndNewlines).trimmingCharacters(in: CharacterSet(charactersIn: "/"))
         guard let components = URLComponents(string: host), components.scheme == "https",
               components.host != nil, components.user == nil, components.password == nil,
@@ -73,24 +75,56 @@ enum RelayClient {
         return (request, pairing)
     }
 
-    static func fetch(completion: @escaping (Result<RelayOTP?, Error>) -> Void) {
+    @discardableResult
+    static func fetch(waitSeconds: Int = 0, afterID: String? = nil,
+                      completion: @escaping (Result<RelayOTP?, Error>) -> Void) -> URLSessionDataTask? {
         do {
-            let (request, pairing) = try request(path: "/api/v1/otp/latest")
-            session.dataTask(with: request) { data, response, error in
+            guard (0...25).contains(waitSeconds), afterID == nil || UUID(uuidString: afterID!) != nil else { throw RelayPayloadError.invalidEnvelope }
+            let suffix = waitSeconds > 0 ? "?waitSeconds=\(waitSeconds)" + (afterID.map { "&afterId=\($0)" } ?? "") : ""
+            var (request, pairing) = try request(path: "/api/v1/otp/latest" + suffix)
+            request.timeoutInterval = waitSeconds > 0 ? 30 : 5
+            let task = session.dataTask(with: request) { data, response, error in
                 if let error { completion(.failure(error)); return }
                 guard let http = response as? HTTPURLResponse, http.statusCode == 200, let data else {
                     completion(.failure(RelayPayloadError.invalidEnvelope)); return
                 }
                 do { completion(.success(try RelayOTP.decode(data, pairing: pairing))) }
                 catch { completion(.failure(RelayPayloadError.invalidEnvelope)) }
-            }.resume()
-        } catch { completion(.failure(RelayPayloadError.invalidPairing)) }
+            }
+            task.resume()
+            return task
+        } catch { completion(.failure(RelayPayloadError.invalidPairing)); return nil }
     }
 
-    // Best-effort acknowledgement after AutoFill selection; app-extension execution may be terminated.
+    private static let acknowledgementQueue = DispatchQueue(label: "com.acefolio.otprelay.acknowledgements")
+    private static let pendingKey = "pendingConsumptionIDs"
     static func consume(_ otp: RelayOTP) {
-        guard UUID(uuidString: otp.id)?.uuidString.lowercased() == otp.id,
-              let (request, _) = try? request(path: "/api/v1/otp/\(otp.id)/consume", method: "POST") else { return }
-        session.dataTask(with: request) { _, _, _ in }.resume()
+        guard otp.expiresAt > Date(), UUID(uuidString: otp.id)?.uuidString.lowercased() == otp.id else { return }
+        acknowledgementQueue.async {
+            var pending = RelayConfig.settings.dictionary(forKey: pendingKey) as? [String: Double] ?? [:]
+            pending[otp.id] = otp.expiresAt.timeIntervalSince1970
+            RelayConfig.settings.set(pending, forKey: pendingKey)
+            sendAcknowledgement(otp.id)
+        }
+    }
+    // Contains only IDs/expiry, never codes. The foreground app retries interrupted extension acknowledgements.
+    static func flushConsumption() {
+        acknowledgementQueue.async {
+            let pending = RelayConfig.settings.dictionary(forKey: pendingKey) as? [String: Double] ?? [:]
+            let valid = pending.filter { $0.value > Date().timeIntervalSince1970 && UUID(uuidString: $0.key) != nil }
+            RelayConfig.settings.set(valid, forKey: pendingKey)
+            valid.keys.forEach { sendAcknowledgement($0) }
+        }
+    }
+    private static func sendAcknowledgement(_ id: String) {
+        guard let (request, _) = try? request(path: "/api/v1/otp/\(id)/consume", method: "POST") else { return }
+        session.dataTask(with: request) { _, response, _ in
+            guard let http = response as? HTTPURLResponse, [204, 404].contains(http.statusCode) else { return }
+            acknowledgementQueue.async {
+                var pending = RelayConfig.settings.dictionary(forKey: pendingKey) as? [String: Double] ?? [:]
+                pending.removeValue(forKey: id)
+                RelayConfig.settings.set(pending, forKey: pendingKey)
+            }
+        }.resume()
     }
 }

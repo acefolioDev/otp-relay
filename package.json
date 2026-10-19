@@ -16,7 +16,10 @@
     "typecheck": "tsc --noEmit -p tsconfig.check.json",
     "provision": "node scripts/provision.mjs",
     "encrypt:example": "node scripts/encrypt-example.mjs",
-    "load": "node scripts/load.mjs"
+    "load": "node scripts/load.mjs",
+    "verify:deployment": "node scripts/verify-deployment.mjs",
+    "test:android": "android/gradlew -p android testDebugUnitTest",
+    "test:ios:live": "scripts/test-ios-client-live.sh"
   },
   "dependencies": {
     "fastify": "^5.12.7",
