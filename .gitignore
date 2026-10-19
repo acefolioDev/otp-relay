@@ -17,4 +17,4 @@ ios/build/
 ios/DerivedData/
 **/xcuserdata/
 ios/Signing.local.xcconfig
-artifacts/
+
