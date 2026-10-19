@@ -9,7 +9,7 @@ These are source examples, not complete signed APK/IPA projects. Both clients us
 3. Run the app. Enter your Railway public **HTTPS** URL with no query/fragment/path, privately paste the generated `android.json`, enter exact comma-separated allowed sender IDs, enable forwarding, save, and grant SMS permission. A blank pairing field retains a previously saved pairing. Pairing material is wrapped with Android Keystore AES-GCM before being stored in private preferences. Do not include it in screenshots or clipboard history.
 4. Send a synthetic mixed-case test such as `Ab7Cd9Ef2G`. The upload encrypts the exact UTF-8 string using the paired AES key and fresh GCM nonce, creates one UUID/timestamp, and sends only encrypted code and metadata. It disables redirects and uses a bounded upload queue and connection/read deadlines.
 5. Test an SMS from an explicitly approved sender. `OtpExtractor.extractApproved` checks exact sender identity before extracting. The explicit `OTP is` format supports 4–10 letters/digits containing at least one digit and preserves their case. It excludes 11-character SMS Retriever hashes and rejects malformed/ambiguous explicit candidates. Only numeric 4–8 digit fallback extraction is allowed outside that explicit format. Multiple candidate numbers require a service-specific parser rather than guessing.
-6. Background delivery is subject to Android process and SMS delivery rules. The source uses a bounded executor, not durable encrypted retries. A production mobile app should keep a broadcast `goAsync()` pending result for bounded immediate work and/or hand off to properly scoped WorkManager work with encrypted storage, original envelope reuse, TTL and bounded backoff. It must never postpone an OTP beyond its expiry or collect every SMS. Physical-device testing is required.
+6. Background delivery is subject to Android process and SMS delivery rules. The receiver uses `goAsync()` with a nine-second pending-result deadline and a bounded upload executor. It has no durable encrypted retry storage. Add properly scoped WorkManager work with encrypted storage, original envelope reuse, TTL and bounded backoff if device background testing requires it. It must never postpone an OTP beyond its expiry or collect every SMS. Physical-device testing is required.
 
 The manual test field permits `[A-Za-z0-9]{4,32}`; automatic SMS extraction deliberately uses the narrower rules above. To expand a service's format, add an explicit allowlisted parser with synthetic tests. Do not use arbitrary alphanumeric matching: a hash or another message token can resemble an OTP.
 
@@ -20,7 +20,7 @@ scripts/test-android-extractor.sh
 # Or KOTLINC=/absolute/path/to/kotlinc scripts/test-android-extractor.sh
 ```
 
-The tests execute actual `OtpExtractor.kt`, use only synthetic codes, and print just a case count. They cover the Easypaisa example, case, leading zeros, numeric formats, hashes, ambiguity and sender allowlists.
+The tests execute actual `OtpExtractor.kt` plus the upload path’s pure JVM AES-GCM helper, use only synthetic codes, and print just case/result counts. A public Node-generated vector is checked by Kotlin, Swift and Node to verify matching AAD and ciphertext. They cover the Easypaisa example, case, leading zeros, numeric formats, hashes, ambiguity and sender allowlists.
 
 ## iPhone app and Credential Provider Extension
 

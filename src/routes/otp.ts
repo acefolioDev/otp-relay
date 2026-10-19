@@ -42,6 +42,7 @@ export function otpRoutes(app: FastifyInstance, config: Config, store: Store, wa
     const parsed = query.safeParse(request.query);
     if (!parsed.success) throw new HttpError(422, 'Invalid query');
     const { waitSeconds, afterId } = parsed.data;
+    request.longPoll = waitSeconds > 0;
     const pairId = request.pair!.pairId;
     if (!waitSeconds) {
       const otp = await store.latest(pairId);

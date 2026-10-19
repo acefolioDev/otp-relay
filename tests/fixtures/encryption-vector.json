@@ -1,0 +1,27 @@
+{
+  "purpose": "PUBLIC SYNTHETIC TEST DATA ONLY - never provision on real devices",
+  "code": "Ab7Cd9Ef2G",
+  "aad": "[\"otp-relay/v1\",\"11111111-1111-4111-8111-111111111111\",\"22222222-2222-4222-8222-222222222222\",\"android\",\"2026-10-19T12:00:00.000Z\",\"public-test-vector\"]",
+  "pairing": {
+    "role": "iphone",
+    "pairId": "11111111-1111-4111-8111-111111111111",
+    "token": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "keyId": "public-test-vector",
+    "encryptionKey": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE"
+  },
+  "response": {
+    "available": true,
+    "otp": {
+      "id": "22222222-2222-4222-8222-222222222222",
+      "receivedAt": "2026-10-19T12:00:00.000Z",
+      "expiresAt": "2026-10-19T12:01:30.000Z",
+      "encrypted": {
+        "algorithm": "A256GCM",
+        "keyId": "public-test-vector",
+        "nonce": "AgICAgICAgICAgIC",
+        "ciphertext": "RrT-Ci5uhJvhiw",
+        "tag": "Yiq7YBWWhU4-eelI1_lcQw"
+      }
+    }
+  }
+}

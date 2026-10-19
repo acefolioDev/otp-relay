@@ -41,9 +41,9 @@ src/
   services/                  Redis Lua operations, Pub/Sub, waiters, metrics
   utils/                     credential hashing and sanitized errors
 scripts/                     provisioning, encryption example, load/mobile tests
- tests/                      Vitest unit and real-Redis integration tests
+tests/                      Vitest unit and real-Redis integration tests
 android/                     Kotlin sender allowlist, extractor, encryption, UI
- ios/                        Swift decryption, app and AutoFill extension source
+ios/                        Swift decryption, app and AutoFill extension source
  docs/                       mobile setup, security protocol, verification results
 Dockerfile                   multi-stage build, unprivileged production runtime
 railway.json                 readiness gate, restart policy, shutdown draining
@@ -251,7 +251,7 @@ No force push or global Git configuration is used. Railway access and an actual 
 
 Goals: each immediate backend route p95 <200ms; normal backend handling ideally 1–3 seconds or better; overall Android SMS → iOS selection target <15 seconds. These are goals, **not measured production SLAs**. Network/SMS delay, APNs, OS scheduling, AutoFill support and user interaction are outside backend control.
 
-`Server-Timing: app;dur=…` and safe structured `durationMs` logs measure server request duration; POST also logs client timestamp age. Authenticated metrics expose cumulative histograms. Long-poll durations intentionally include waiting and must be analyzed separately from immediate requests. Export logs/metrics to your monitoring system to derive production percentiles; no real codes should enter telemetry.
+`Server-Timing: app;dur=…` and safe structured `durationMs` logs measure server request duration; POST also logs client timestamp age. Authenticated metrics expose cumulative histograms. Long-poll durations intentionally include waiting; a `longPoll` log field and separate `(long_poll)` histogram series distinguish them from immediate requests. Export logs/metrics to your monitoring system to derive production percentiles; no real codes should enter telemetry.
 
 The dependency-free load client uses Node HTTP keep-alive and histograms. It measures full HTTP request/response latency for **encrypted upload → GET → consume** cycles and reports average/p50/p95/p99, status counts, error rate and throughput, both overall and per route. Encryption is performed on the client before the POST timer. Throughput includes all cycle work.
 
@@ -298,3 +298,17 @@ Redis commands fail within a bounded deadline, do not queue while disconnected a
 - [ ] Measure real Android-to-iPhone latency; no <15-second claim until physical-device evidence exists.
 
 Official references: [Fastify logging](https://fastify.dev/docs/latest/Reference/Logging/), [node-redis production guidance](https://redis.io/docs/latest/develop/clients/nodejs/produsage/), [Railway config as code](https://docs.railway.com/config-as-code/reference), [Railway health checks](https://docs.railway.com/deployments/healthchecks), [Apple OTP AutoFill](https://developer.apple.com/documentation/authenticationservices/providing-one-time-passcodes-to-autofill), [Google SMS Retriever message/hash format](https://developers.google.com/identity/sms-retriever/verify).
+
+## Deployment handoff: what to send afterward
+
+Deploy the **backend first** using the Railway steps above. After deployment, send:
+
+1. The public **HTTPS backend URL** (for example `https://…up.railway.app`).
+2. The status/output of `GET /health` and `GET /ready`. If deployment failed, the sanitized build/runtime error and which step failed.
+3. The intended Android package name and iOS app/extension bundle IDs; your Apple Team ID, App Group ID and Keychain access group when ready. These are configuration identifiers, not signing credentials.
+4. The exact approved SMS sender IDs, including Easypaisa's ID as reported on your Android device, and any additional OTP formats to support. Use synthetic/redacted examples.
+5. Existing Android Studio/Xcode project files if you have already created them, plus your Android and iOS versions for device testing.
+
+Keep the generated device tokens, AES keys, `android.json`, `iphone.json`, and operator metrics token in your private local provisioning files; enter/import them directly on the appropriate devices or environment. They are not needed in chat. Railway needs only `server.env` values and the private Redis variable reference. There is no mobile build or real-device latency claim pending this deployment handoff.
+
+With that information, the next phase is to configure the mobile clients for the actual deployed URL, finish app project/signing setup, verify the sender allowlist and exact-case AutoFill behavior, and measure real end-to-end delivery.

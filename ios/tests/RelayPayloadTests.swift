@@ -26,6 +26,12 @@ import CryptoKit
         }
         let empty = try RelayOTP.decode(Data("{\"available\":false}".utf8), pairing: pairing)
         precondition(empty == nil); count += 1
-        print("Passed \(count) synthetic iOS payload tests (no OTP values logged).")
+        // Node-generated public vector verifies actual cross-language AAD and ciphertext compatibility.
+        let fixture = try JSONSerialization.jsonObject(with: Data(contentsOf: URL(fileURLWithPath: "tests/fixtures/encryption-vector.json"))) as! [String: Any]
+        let fixturePairing = try RelayPairing.parse(String(decoding: JSONSerialization.data(withJSONObject: fixture["pairing"]!), as: UTF8.self))
+        let fixtureData = try JSONSerialization.data(withJSONObject: fixture["response"]!)
+        let fixtureCode = try RelayOTP.decode(fixtureData, pairing: fixturePairing, now: dates.date(from: "2026-10-19T12:00:01.000Z")!)
+        precondition(fixtureCode?.code == fixture["code"] as? String); count += 1
+        print("Passed \(count) synthetic iOS payload tests (including Node interoperability; no OTP values logged).")
     }
 }

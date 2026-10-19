@@ -19,6 +19,14 @@ class OtpReceiver : BroadcastReceiver() {
         if (messages.any { it.originatingAddress != sender }) return
         val text = messages.joinToString(separator = "") { it.displayMessageBody ?: "" }
         val code = OtpExtractor.extractApproved(sender, allowed, text) ?: return
-        Upload.uploadAsync(context.applicationContext, code)
+        val pending = goAsync()
+        val completed = java.util.concurrent.atomic.AtomicBoolean(false)
+        val handler = android.os.Handler(android.os.Looper.getMainLooper())
+        val finish = Runnable { if (completed.compareAndSet(false, true)) pending.finish() }
+        handler.postDelayed(finish, 9000)
+        Upload.uploadAsync(context.applicationContext, code) {
+            handler.removeCallbacks(finish)
+            finish.run()
+        }
     }
 }

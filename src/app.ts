@@ -26,6 +26,7 @@ export function buildApp(config: Config, options: { store?: Store; logger?: pino
   const waiters = new Waiters(store, config.maxLongPolls);
   let draining = false;
   app.decorateRequest('startedAt', 0);
+  app.decorateRequest('longPoll', false);
   app.addHook('onRequest', async (request, reply) => {
     request.startedAt = performance.now();
     reply.headers({ 'Cache-Control': 'no-store, private', Pragma: 'no-cache',
@@ -40,12 +41,12 @@ export function buildApp(config: Config, options: { store?: Store; logger?: pino
   app.addHook('onResponse', async (request, reply) => {
     const durationMs = performance.now() - request.startedAt;
     const route = request.routeOptions.url ?? 'unmatched';
-    metrics.record(route, request.routeOptions.method?.toString() ?? 'unknown', durationMs, reply.statusCode);
-    request.log.info({ event: 'request_complete', route, status: reply.statusCode,
+    metrics.record(route, request.routeOptions.method?.toString() ?? 'unknown', durationMs, reply.statusCode, request.longPoll);
+    request.log.info({ event: 'request_complete', route, status: reply.statusCode, longPoll: request.longPoll,
       durationMs: Number(durationMs.toFixed(3)) }, 'Request complete');
   });
   app.setErrorHandler((caught, request, reply) => {
-    const error = caught as Error & { code?: string; statusCode?: number }; 
+    const error = caught as Error & { code?: string; statusCode?: number };
     let status = error instanceof HttpError ? error.statusCode : 503;
     let message = error instanceof HttpError ? error.publicMessage : 'Service unavailable';
     if (error.code === 'FST_ERR_CTP_BODY_TOO_LARGE') { status = 413; message = 'Payload too large'; }

@@ -38,4 +38,5 @@ fun main() {
     check(OtpExtractor.extractApproved(null, listOf("EASYPAISA"), sample) == null); count++
     check(OtpExtractor.extractApproved("EASYPAISA", listOf("EASY"), sample) == null); count++
     println("Passed $count synthetic extractor tests (no OTP values logged).")
+    testRelayCipher()
 }

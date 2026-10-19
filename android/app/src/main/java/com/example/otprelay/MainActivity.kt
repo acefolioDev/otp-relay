@@ -37,7 +37,9 @@ class MainActivity : Activity() {
         root.addView(save)
         save.setOnClickListener {
             val host = url.text.toString().trim().trimEnd('/')
-            if (!host.startsWith("https://")) {
+            val uri = runCatching { java.net.URI(host) }.getOrNull()
+            if (uri?.scheme != "https" || uri.host == null || uri.rawUserInfo != null ||
+                uri.rawQuery != null || uri.rawFragment != null || uri.path !in listOf("", "/")) {
                 Toast.makeText(this, "HTTPS URL required", Toast.LENGTH_LONG).show()
                 return@setOnClickListener
             }
@@ -50,12 +52,15 @@ class MainActivity : Activity() {
                 Toast.makeText(this, "Import valid private android.json pairing data", Toast.LENGTH_LONG).show()
                 return@setOnClickListener
             }
+            if (runCatching { SecretStore.save(this, pairingJson) }.isFailure) {
+                Toast.makeText(this, "Unable to save encrypted pairing", Toast.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
             preferences.edit()
                 .putString("url", host)
                 .putString("senders", senders.text.toString())
                 .putBoolean("enabled", enabled.isChecked)
                 .apply()
-            SecretStore.save(this, pairingJson)
             pairingInput.text.clear()
             if (checkSelfPermission(Manifest.permission.RECEIVE_SMS) != PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(arrayOf(Manifest.permission.RECEIVE_SMS), 12)

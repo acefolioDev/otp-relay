@@ -7,7 +7,7 @@ import { HttpError } from '../utils/errors.js';
 export type Role = 'android' | 'iphone' | 'metrics';
 declare module 'fastify' {
   interface FastifyContextConfig { role?: Role }
-  interface FastifyRequest { pair: Pair | null; startedAt: number }
+  interface FastifyRequest { pair: Pair | null; startedAt: number; longPoll: boolean }
 }
 export function installAuth(app: FastifyInstance, config: Config, store: Store) {
   app.decorateRequest('pair', null);
