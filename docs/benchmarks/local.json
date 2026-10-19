@@ -1,0 +1,49 @@
+{
+  "timestamp": "2026-10-19T12:09:58.492Z",
+  "node": "v22.23.1",
+  "workload": "encrypted upload -> latest -> consume cycles; HTTP keep-alive; per-route request latency",
+  "concurrency": 1,
+  "durationSeconds": 5.000969491,
+  "requestsPerSecond": 1143.3783010055158,
+  "routes": {
+    "upload": {
+      "count": 1906,
+      "errors": 0,
+      "errorRate": 0,
+      "statuses": {
+        "201": 1906
+      },
+      "averageMs": 0.8979965582371459,
+      "p50Ms": 0.828927,
+      "p95Ms": 1.263615,
+      "p99Ms": 2.217983,
+      "requestsPerSecond": 381.126100335172
+    },
+    "latest": {
+      "count": 1906,
+      "errors": 0,
+      "errorRate": 0,
+      "statuses": {
+        "200": 1906
+      },
+      "averageMs": 0.6867542497376705,
+      "p50Ms": 0.639999,
+      "p95Ms": 1.013247,
+      "p99Ms": 1.460223,
+      "requestsPerSecond": 381.126100335172
+    },
+    "consume": {
+      "count": 1906,
+      "errors": 0,
+      "errorRate": 0,
+      "statuses": {
+        "204": 1906
+      },
+      "averageMs": 0.8455725666316894,
+      "p50Ms": 0.767999,
+      "p95Ms": 1.185791,
+      "p99Ms": 1.820671,
+      "requestsPerSecond": 381.126100335172
+    }
+  }
+}
