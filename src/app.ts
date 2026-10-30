@@ -4,13 +4,19 @@ import { randomUUID } from 'node:crypto';
 import type { Config } from './config/env.js';
 import { installAuth } from './middleware/auth.js';
 import { otpRoutes } from './routes/otp.js';
+import { registerAuthRoutes } from './routes/auth.js';
+import { AuthService } from './services/auth-service.js';
+import { PostgresDatabase, type Database } from './services/db.js';
 import { Metrics } from './services/metrics.js';
 import { RedisStore } from './services/redis-store.js';
 import type { Store } from './services/types.js';
 import { Waiters } from './services/waiters.js';
 import { HttpError } from './utils/errors.js';
 
-export function buildApp(config: Config, options: { store?: Store; logger?: pino.Logger } = {}) {
+export function buildApp(
+  config: Config,
+  options: { store?: Store; db?: Database; authService?: AuthService; logger?: pino.Logger } = {}
+) {
   const logger = options.logger ?? pino({ level: config.logLevel,
     redact: ['req', 'res', 'body', 'headers', 'authorization', 'code', 'encrypted', 'token', 'key', 'redisUrl'],
   });
@@ -65,6 +71,9 @@ export function buildApp(config: Config, options: { store?: Store; logger?: pino
   });
   app.get('/api/v1/metrics', { config: { role: 'metrics' } }, async () => metrics.snapshot());
   otpRoutes(app, config, store, waiters);
+  if (options.db && options.authService) {
+    registerAuthRoutes(app, options.db, options.authService);
+  }
   app.addHook('onReady', () => store.start());
   app.addHook('preClose', async () => { draining = true; waiters.close(); });
   app.addHook('onClose', () => store.close());

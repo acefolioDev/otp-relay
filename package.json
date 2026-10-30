@@ -22,7 +22,10 @@
     "test:ios:live": "scripts/test-ios-client-live.sh"
   },
   "dependencies": {
+    "@types/pg": "^8.23.1",
     "fastify": "^5.12.7",
+    "google-auth-library": "^11.3.2",
+    "pg": "^8.23.1",
     "pino": "^10.4.0",
     "redis": "^6.3.0",
     "zod": "^4.6.7"
