@@ -23,12 +23,15 @@ const schema = z.object({
   RATE_LIMIT_ANDROID: z.coerce.number().int().min(1).max(100000).default(120),
   RATE_LIMIT_IPHONE: z.coerce.number().int().min(1).max(100000).default(600),
   MAX_LONG_POLLS: z.coerce.number().int().min(1).max(10000).default(200),
+  DATABASE_URL: z.string().optional(),
+  GOOGLE_CLIENT_IDS: z.string().optional(),
 });
 export interface Config {
   production: boolean; port: number; redisUrl: string; redisPrefix: string;
   pairs: Pair[]; metricsTokenHash: string; ttlMs: number; clockSkewMs: number;
   allowPlaintext: boolean; logLevel: z.infer<typeof schema>['LOG_LEVEL'];
   androidRateLimit: number; iphoneRateLimit: number; maxLongPolls: number;
+  databaseUrl?: string | undefined; googleClientIds: string[];
 }
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   // Never surface Zod issues containing environment values.
@@ -53,6 +56,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     ttlMs: v.OTP_TTL_SECONDS * 1000, clockSkewMs: v.CLOCK_SKEW_SECONDS * 1000,
     allowPlaintext: v.DEV_ALLOW_PLAINTEXT_OTP === 'true', logLevel: v.LOG_LEVEL,
     androidRateLimit: v.RATE_LIMIT_ANDROID, iphoneRateLimit: v.RATE_LIMIT_IPHONE,
-    maxLongPolls: v.MAX_LONG_POLLS,
+    maxLongPolls: v.MAX_LONG_POLLS, databaseUrl: v.DATABASE_URL,
+    googleClientIds: v.GOOGLE_CLIENT_IDS ? v.GOOGLE_CLIENT_IDS.split(',').map(s => s.trim()).filter(Boolean) : [],
   };
 }

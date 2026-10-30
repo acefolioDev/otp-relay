@@ -38,11 +38,6 @@ targets:
         RelayKeychainGroup: $(RELAY_SIGNING_PREFIX)$(RELAY_KEYCHAIN_SUFFIX)
     entitlements:
       path: OTPRelay/OTPRelay.entitlements
-      properties:
-        application-identifier: $(RELAY_SIGNING_PREFIX)$(PRODUCT_BUNDLE_IDENTIFIER)
-        com.apple.developer.authentication-services.autofill-credential-provider: true
-        com.apple.security.application-groups: ['$(RELAY_APP_GROUP)']
-        keychain-access-groups: ['$(RELAY_SIGNING_PREFIX)$(RELAY_KEYCHAIN_SUFFIX)']
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.acefolio.otprelay

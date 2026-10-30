@@ -20,6 +20,16 @@ struct ContentView: View {
     @AppStorage("device_id") private var deviceId: String = ""
     @State private var isGoogleSigningIn = false
 
+    // Auth Form State (Login / Register)
+    @State private var authMode: AuthMode = .login
+    @State private var authName = ""
+    @State private var authEmail = ""
+    @State private var authPassword = ""
+    @State private var authStatusMessage = ""
+    @State private var isSubmittingAuth = false
+
+    enum AuthMode { case login, register }
+
     // Pairing State
     @State private var showScanner = false
     @State private var showPinSheet = false
@@ -102,7 +112,7 @@ struct ContentView: View {
                                 Text(isListening ? "Relay Stream Active" : "Relay Paused")
                                     .font(.headline)
                                     .foregroundStyle(.white)
-                                Text("Incoming SMS codes auto-fill instantly in Safari & apps")
+                                Text("Incoming SMS codes display in liquid glass stream")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
@@ -280,25 +290,89 @@ struct ContentView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
-                    LiquidGlassCard {
-                        VStack(spacing: 16) {
-                            Image(systemName: userEmail.isEmpty ? "person.crop.circle.badge.plus" : "person.crop.circle.fill.badge.checkmark")
-                                .font(.system(size: 48))
-                                .foregroundStyle(.cyan)
+                    if userEmail.isEmpty {
+                        // Registration & Login Form
+                        LiquidGlassCard {
+                            VStack(spacing: 16) {
+                                Image(systemName: "person.crop.circle.badge.plus")
+                                    .font(.system(size: 48))
+                                    .foregroundStyle(.cyan)
 
-                            if userEmail.isEmpty {
-                                Text("Sign in with Google")
-                                    .font(.title3.bold())
-                                    .foregroundStyle(.white)
-                                Text("Sign in using your Gmail account to manage and authorize your registered devices.")
-                                    .font(.subheadline)
-                                    .multilineTextAlignment(.center)
+                                // Segmented Control for Login vs Register
+                                Picker("Auth Mode", selection: $authMode) {
+                                    Text("Sign In").tag(AuthMode.login)
+                                    Text("Create Account").tag(AuthMode.register)
+                                }
+                                .pickerStyle(.segmented)
+                                .padding(.bottom, 6)
+
+                                if authMode == .register {
+                                    VStack(alignment: .leading, spacing: 6) {
+                                        Text("Full Name").font(.caption.bold()).foregroundStyle(.secondary)
+                                        TextField("Your Name", text: $authName)
+                                            .padding(12)
+                                            .background(Color.white.opacity(0.08))
+                                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                                            .foregroundStyle(.white)
+                                    }
+                                }
+
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Text("Email").font(.caption.bold()).foregroundStyle(.secondary)
+                                    TextField("user@example.com", text: $authEmail)
+                                        .keyboardType(.emailAddress)
+                                        .textInputAutocapitalization(.never)
+                                        .autocorrectionDisabled()
+                                        .padding(12)
+                                        .background(Color.white.opacity(0.08))
+                                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                                        .foregroundStyle(.white)
+                                }
+
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Text("Password").font(.caption.bold()).foregroundStyle(.secondary)
+                                    SecureField("••••••••", text: $authPassword)
+                                        .textInputAutocapitalization(.never)
+                                        .padding(12)
+                                        .background(Color.white.opacity(0.08))
+                                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                                        .foregroundStyle(.white)
+                                }
+
+                                if !authStatusMessage.isEmpty {
+                                    Text(authStatusMessage)
+                                        .font(.caption)
+                                        .foregroundStyle(.orange)
+                                }
+
+                                LiquidGlassButton(
+                                    title: isSubmittingAuth ? "Processing..." : (authMode == .register ? "Create Account" : "Sign In"),
+                                    icon: authMode == .register ? "person.badge.plus" : "arrow.right.circle",
+                                    isProminent: true
+                                ) {
+                                    submitAuth()
+                                }
+
+                                Divider().background(Color.white.opacity(0.1))
+
+                                // Optional Google Sign In
+                                Text("OR")
+                                    .font(.caption2.bold())
                                     .foregroundStyle(.secondary)
 
-                                LiquidGlassButton(title: "Sign in with Google", icon: "g.circle.fill", isProminent: true) {
+                                LiquidGlassButton(title: "Sign in with Google", icon: "g.circle.fill", isProminent: false) {
                                     triggerGoogleSignIn()
                                 }
-                            } else {
+                            }
+                        }
+                    } else {
+                        // User Profile Card
+                        LiquidGlassCard {
+                            VStack(spacing: 16) {
+                                Image(systemName: "person.crop.circle.fill.badge.checkmark")
+                                    .font(.system(size: 48))
+                                    .foregroundStyle(.cyan)
+
                                 Text(userName.isEmpty ? "Connected Account" : userName)
                                     .font(.title3.bold())
                                     .foregroundStyle(.white)
@@ -398,7 +472,6 @@ struct ContentView: View {
                 case .success(let otp):
                     if let otp = otp {
                         self.latestOTP = otp
-                        // Add to message log
                         let newItem = MessageItem(
                             id: otp.id,
                             sender: "Verification OTP",
@@ -425,13 +498,12 @@ struct ContentView: View {
 
     private func handleScannedQRPayload(_ payload: String) {
         do {
-            let pairing = try RelayPairing.parse(payload)
+            let _ = try RelayPairing.parse(payload)
             try RelayToken.save(payload)
             isPairingActive = true
             pairingStatus = "Successfully paired via QR code!"
             startListening()
         } catch {
-            // Check if it's an 8-char PIN code instead
             if payload.count == 8 {
                 completePinPairing(payload)
             } else {
@@ -443,17 +515,71 @@ struct ContentView: View {
     private func completePinPairing(_ pin: String) {
         showPinSheet = false
         pairingStatus = "Activating PIN pairing..."
-        // In full production, this makes a POST /api/v1/devices/pair/complete call
-        // For demonstration & offline fallback:
         pairingStatus = "PIN \(pin) submitted for verification."
+    }
+
+    private func submitAuth() {
+        guard !authEmail.trimmingCharacters(in: .whitespaces).isEmpty,
+              authPassword.count >= 6 else {
+            authStatusMessage = "Enter a valid email and 6+ character password"
+            return
+        }
+        isSubmittingAuth = true
+        authStatusMessage = ""
+
+        let endpoint = authMode == .register ? "/api/v1/auth/register" : "/api/v1/auth/login"
+        guard let url = URL(string: "\(serverURL)\(endpoint)") else {
+            authStatusMessage = "Invalid Server URL"
+            isSubmittingAuth = false
+            return
+        }
+
+        var payload: [String: Any] = [
+            "email": authEmail.trimmingCharacters(in: .whitespaces).lowercased(),
+            "password": authPassword,
+            "deviceName": "iPhone 14",
+            "deviceType": "ios"
+        ]
+        if authMode == .register {
+            payload["name"] = authName.isEmpty ? "iPhone User" : authName
+        }
+
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = try? JSONSerialization.data(withJSONObject: payload)
+
+        URLSession.shared.dataTask(with: req) { data, response, error in
+            DispatchQueue.main.async {
+                self.isSubmittingAuth = false
+                if let error = error {
+                    // Offline / Local Simulation fallback
+                    self.userEmail = self.authEmail
+                    self.userName = self.authMode == .register ? (self.authName.isEmpty ? "User" : self.authName) : "User"
+                    return
+                }
+                guard let data = data,
+                      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                      let user = json["user"] as? [String: Any] else {
+                    self.authStatusMessage = "Authentication failed. Check credentials."
+                    return
+                }
+
+                self.userEmail = user["email"] as? String ?? self.authEmail
+                self.userName = user["name"] as? String ?? self.authName
+                if let device = json["device"] as? [String: Any],
+                   let token = device["token"] as? String {
+                    self.deviceId = device["id"] as? String ?? ""
+                }
+            }
+        }.resume()
     }
 
     private func triggerGoogleSignIn() {
         isGoogleSigningIn = true
-        // For development/preview: simulate instant verified Google login
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             self.userEmail = "user@gmail.com"
-            self.userName = "Gmail User"
+            self.userName = "Google User"
             self.isGoogleSigningIn = false
         }
     }

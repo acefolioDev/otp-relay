@@ -335,7 +335,8 @@ class MainActivity : Activity() {
     // TAB 3: Account & Settings
     private fun renderAccountView() {
         val prefs = getSharedPreferences("relay", MODE_PRIVATE)
-        val userEmail = prefs.getString("user_email", "user@gmail.com") ?: "user@gmail.com"
+        val userEmail = prefs.getString("user_email", "") ?: ""
+        val userName = prefs.getString("user_name", "") ?: ""
         val serverUrl = prefs.getString("url", BuildConfig.RELAY_BASE_URL) ?: BuildConfig.RELAY_BASE_URL
 
         val card = LinearLayout(this).apply {
@@ -346,26 +347,186 @@ class MainActivity : Activity() {
                 bottomMargin = 36
             }
         }
-        card.addView(TextView(this).apply {
-            text = "Google Account"
-            textSize = 16f
-            typeface = Typeface.DEFAULT_BOLD
-            setTextColor(Color.WHITE)
-        })
-        card.addView(TextView(this).apply {
-            text = "Signed in as: $userEmail"
-            textSize = 14f
-            setTextColor(Color.parseColor("#38BDF8"))
-            setPadding(0, 8, 0, 24)
-        })
+
+        if (userEmail.isEmpty()) {
+            card.addView(TextView(this).apply {
+                text = "Sign In or Register"
+                textSize = 18f
+                typeface = Typeface.DEFAULT_BOLD
+                setTextColor(Color.WHITE)
+            })
+
+            // Name Field
+            card.addView(TextView(this).apply {
+                text = "Full Name (for new account)"
+                textSize = 12f
+                setTextColor(Color.parseColor("#94A3B8"))
+                setPadding(0, 16, 0, 8)
+            })
+            val nameInput = EditText(this).apply {
+                hint = "Your Name"
+                setHintTextColor(Color.parseColor("#64748B"))
+                setTextColor(Color.WHITE)
+                background = createCardDrawable("#0F172A", strokeColor = "#334155")
+                setPadding(28, 24, 28, 24)
+            }
+            card.addView(nameInput)
+
+            // Email Field
+            card.addView(TextView(this).apply {
+                text = "Email"
+                textSize = 12f
+                setTextColor(Color.parseColor("#94A3B8"))
+                setPadding(0, 16, 0, 8)
+            })
+            val emailInput = EditText(this).apply {
+                hint = "user@example.com"
+                setHintTextColor(Color.parseColor("#64748B"))
+                setTextColor(Color.WHITE)
+                inputType = android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+                background = createCardDrawable("#0F172A", strokeColor = "#334155")
+                setPadding(28, 24, 28, 24)
+            }
+            card.addView(emailInput)
+
+            // Password Field
+            card.addView(TextView(this).apply {
+                text = "Password (6+ chars)"
+                textSize = 12f
+                setTextColor(Color.parseColor("#94A3B8"))
+                setPadding(0, 16, 0, 8)
+            })
+            val passInput = EditText(this).apply {
+                hint = "••••••••"
+                setHintTextColor(Color.parseColor("#64748B"))
+                setTextColor(Color.WHITE)
+                inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+                background = createCardDrawable("#0F172A", strokeColor = "#334155")
+                setPadding(28, 24, 28, 24)
+            }
+            card.addView(passInput)
+
+            // Buttons: Sign In / Create Account
+            val btnRow = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                    topMargin = 28
+                }
+                weightSum = 2f
+            }
+
+            val loginBtn = Button(this).apply {
+                text = "Sign In"
+                isAllCaps = false
+                setTextColor(Color.WHITE)
+                background = createCardDrawable("#0284C7")
+                layoutParams = LinearLayout.LayoutParams(0, 110, 1f).apply { rightMargin = 8 }
+                setOnClickListener {
+                    val em = emailInput.text.toString().trim()
+                    val pw = passInput.text.toString()
+                    if (em.isNotEmpty() && pw.length >= 6) {
+                        prefs.edit().putString("user_email", em).putString("user_name", "Android User").apply()
+                        Toast.makeText(this@MainActivity, "Signed in as $em", Toast.LENGTH_SHORT).show()
+                        renderActiveTab()
+                    } else {
+                        Toast.makeText(this@MainActivity, "Enter email & 6+ char password", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+
+            val registerBtn = Button(this).apply {
+                text = "Register"
+                isAllCaps = false
+                setTextColor(Color.parseColor("#0F172A"))
+                typeface = Typeface.DEFAULT_BOLD
+                background = createCardDrawable("#38BDF8")
+                layoutParams = LinearLayout.LayoutParams(0, 110, 1f).apply { leftMargin = 8 }
+                setOnClickListener {
+                    val nm = nameInput.text.toString().trim()
+                    val em = emailInput.text.toString().trim()
+                    val pw = passInput.text.toString()
+                    if (em.isNotEmpty() && pw.length >= 6) {
+                        prefs.edit().putString("user_email", em).putString("user_name", nm.ifEmpty { "User" }).apply()
+                        Toast.makeText(this@MainActivity, "Account created & signed in", Toast.LENGTH_SHORT).show()
+                        renderActiveTab()
+                    } else {
+                        Toast.makeText(this@MainActivity, "Enter name, email & 6+ char password", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+
+            btnRow.addView(loginBtn)
+            btnRow.addView(registerBtn)
+            card.addView(btnRow)
+
+            // Optional Google Login Button
+            val googleBtn = Button(this).apply {
+                text = "Sign In with Google (Optional)"
+                isAllCaps = false
+                setTextColor(Color.WHITE)
+                background = createCardDrawable("#334155")
+                layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 110).apply {
+                    topMargin = 16
+                }
+                setOnClickListener {
+                    prefs.edit().putString("user_email", "user@gmail.com").putString("user_name", "Google User").apply()
+                    Toast.makeText(this@MainActivity, "Google Sign-In successful", Toast.LENGTH_SHORT).show()
+                    renderActiveTab()
+                }
+            }
+            card.addView(googleBtn)
+
+        } else {
+            card.addView(TextView(this).apply {
+                text = "Account Profile"
+                textSize = 18f
+                typeface = Typeface.DEFAULT_BOLD
+                setTextColor(Color.WHITE)
+            })
+            card.addView(TextView(this).apply {
+                text = if (userName.isNotEmpty()) userName else "Connected User"
+                textSize = 15f
+                setTextColor(Color.WHITE)
+                setPadding(0, 12, 0, 4)
+            })
+            card.addView(TextView(this).apply {
+                text = userEmail
+                textSize = 14f
+                setTextColor(Color.parseColor("#38BDF8"))
+                setPadding(0, 0, 0, 24)
+            })
+
+            val signOutBtn = Button(this).apply {
+                text = "Sign Out"
+                isAllCaps = false
+                setTextColor(Color.WHITE)
+                background = createCardDrawable("#475569")
+                layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 110)
+                setOnClickListener {
+                    prefs.edit().remove("user_email").remove("user_name").apply()
+                    Toast.makeText(this@MainActivity, "Signed out", Toast.LENGTH_SHORT).show()
+                    renderActiveTab()
+                }
+            }
+            card.addView(signOutBtn)
+        }
 
         // Server Settings
-        card.addView(TextView(this).apply {
+        val serverCard = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(40, 36, 40, 36)
+            background = createCardDrawable("#1E293B")
+            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                topMargin = 28
+                bottomMargin = 36
+            }
+        }
+        serverCard.addView(TextView(this).apply {
             text = "HTTPS Relay Server URL"
             textSize = 14f
             typeface = Typeface.DEFAULT_BOLD
             setTextColor(Color.WHITE)
-            setPadding(0, 8, 0, 8)
+            setPadding(0, 0, 0, 8)
         })
 
         val urlInput = EditText(this).apply {
@@ -374,7 +535,7 @@ class MainActivity : Activity() {
             background = createCardDrawable("#0F172A", strokeColor = "#334155")
             setPadding(28, 24, 28, 24)
         }
-        card.addView(urlInput)
+        serverCard.addView(urlInput)
 
         val saveBtn = Button(this).apply {
             text = "Save Settings"
@@ -389,9 +550,10 @@ class MainActivity : Activity() {
                 Toast.makeText(this@MainActivity, "Settings saved", Toast.LENGTH_SHORT).show()
             }
         }
-        card.addView(saveBtn)
+        serverCard.addView(saveBtn)
 
         contentContainer.addView(card)
+        contentContainer.addView(serverCard)
     }
 
     private fun createCardDrawable(bgColor: String, strokeColor: String? = null): GradientDrawable {

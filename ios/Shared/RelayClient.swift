@@ -13,10 +13,16 @@ enum RelayToken {
     private static let account = "iphone-read-token"
     private static let service = "com.example.otprelay"
     private static var query: [String: Any] {
-        [kSecClass as String: kSecClassGenericPassword,
-         kSecAttrAccount as String: account,
-         kSecAttrService as String: service,
-         kSecAttrAccessGroup as String: RelayConfig.keychainGroup]
+        var q: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccount as String: account,
+            kSecAttrService as String: service
+        ]
+        // Only attach access group if valid non-local group exists
+        if !RelayConfig.keychainGroup.isEmpty && !RelayConfig.keychainGroup.contains("LOCAL.") {
+            q[kSecAttrAccessGroup as String] = RelayConfig.keychainGroup
+        }
+        return q
     }
 
     static func save(_ token: String) throws {

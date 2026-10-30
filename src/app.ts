@@ -15,7 +15,7 @@ import { HttpError } from './utils/errors.js';
 
 export function buildApp(
   config: Config,
-  options: { store?: Store; db?: Database; authService?: AuthService; logger?: pino.Logger } = {}
+  options: { store?: Store | undefined; db?: Database | undefined; authService?: AuthService | undefined; logger?: pino.Logger | undefined } = {}
 ) {
   const logger = options.logger ?? pino({ level: config.logLevel,
     redact: ['req', 'res', 'body', 'headers', 'authorization', 'code', 'encrypted', 'token', 'key', 'redisUrl'],

@@ -36,6 +36,7 @@ export class PostgresDatabase implements Database {
       CREATE TABLE IF NOT EXISTS users (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         email VARCHAR(255) UNIQUE NOT NULL,
+        password_hash VARCHAR(255),
         google_sub VARCHAR(255) UNIQUE,
         name VARCHAR(255),
         picture TEXT,

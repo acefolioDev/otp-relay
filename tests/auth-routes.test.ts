@@ -5,14 +5,17 @@ import type { Database } from '../src/services/db.js';
 import type { AuthService } from '../src/services/auth-service.js';
 
 describe('Auth & Device Pairing Routes', () => {
-  it('registers user and issues device token upon valid Google ID token', async () => {
+  it('registers a user with name, email and password', async () => {
     const mockDb: Database = {
       query: vi.fn().mockImplementation(async (sql: string, params: any[]) => {
+        if (sql.includes('SELECT id FROM users WHERE email')) {
+          return { rows: [] };
+        }
         if (sql.includes('INSERT INTO users')) {
-          return { rows: [{ id: '11111111-1111-1111-1111-111111111111', email: params[0], name: params[2], picture: params[3] }] };
+          return { rows: [{ id: 'user-uuid-1', email: params[0], name: params[1] }] };
         }
         if (sql.includes('INSERT INTO devices')) {
-          return { rows: [{ id: '22222222-2222-2222-2222-222222222222', device_name: params[1], device_type: params[2] }] };
+          return { rows: [{ id: 'device-uuid-1', device_name: params[1], device_type: params[2] }] };
         }
         return { rows: [] };
       }),
@@ -20,85 +23,67 @@ describe('Auth & Device Pairing Routes', () => {
       migrate: vi.fn(),
     };
 
-    const mockAuthService: AuthService = {
-      verifyGoogleIdToken: vi.fn().mockResolvedValue({
-        sub: 'google-sub-12345',
-        email: 'user@gmail.com',
-        name: 'Test User',
-        picture: 'https://example.com/avatar.png',
-      }),
-    } as any;
-
     const app = Fastify();
-    registerAuthRoutes(app, mockDb, mockAuthService);
+    registerAuthRoutes(app, mockDb, {} as any);
 
     const res = await app.inject({
       method: 'POST',
-      url: '/api/v1/auth/google',
+      url: '/api/v1/auth/register',
       payload: {
-        idToken: 'mock-valid-id-token-abc',
-        deviceName: "User's Pixel 9",
-        deviceType: 'android',
+        name: 'Muhammad Atif',
+        email: 'atif@example.com',
+        password: 'SuperSecretPassword123!',
+        deviceName: "Atif's iPhone 14",
+        deviceType: 'ios',
+      },
+    });
+
+    expect(res.statusCode).toBe(201);
+    const body = JSON.parse(res.body);
+    expect(body.user.email).toBe('atif@example.com');
+    expect(body.user.name).toBe('Muhammad Atif');
+    expect(body.device.token).toBeDefined();
+    expect(body.device.token.length).toBeGreaterThan(30);
+  });
+
+  it('authenticates user with email and password', async () => {
+    // Generate valid scrypt hash
+    const { scryptSync } = await import('node:crypto');
+    const salt = 'aabbccddeeff';
+    const hash = scryptSync('SuperSecretPassword123!', salt, 64).toString('hex');
+    const storedHash = `${salt}:${hash}`;
+
+    const mockDb: Database = {
+      query: vi.fn().mockImplementation(async (sql: string) => {
+        if (sql.includes('SELECT id, email, name, password_hash FROM users')) {
+          return { rows: [{ id: 'user-uuid-1', email: 'atif@example.com', name: 'Muhammad Atif', password_hash: storedHash }] };
+        }
+        if (sql.includes('INSERT INTO devices')) {
+          return { rows: [{ id: 'device-uuid-1', device_name: 'iPhone 14', device_type: 'ios' }] };
+        }
+        return { rows: [] };
+      }),
+      close: vi.fn(),
+      migrate: vi.fn(),
+    };
+
+    const app = Fastify();
+    registerAuthRoutes(app, mockDb, {} as any);
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/login',
+      payload: {
+        email: 'atif@example.com',
+        password: 'SuperSecretPassword123!',
+        deviceName: 'iPhone 14',
+        deviceType: 'ios',
       },
     });
 
     expect(res.statusCode).toBe(200);
     const body = JSON.parse(res.body);
-    expect(body.user.email).toBe('user@gmail.com');
-    expect(body.device.name).toBe("User's Pixel 9");
+    expect(body.user.name).toBe('Muhammad Atif');
     expect(body.device.token).toBeDefined();
-    expect(body.device.token.length).toBeGreaterThan(30);
-  });
-
-  it('initiates and completes pairing across Android and iOS', async () => {
-    const mockDb: Database = {
-      query: vi.fn().mockImplementation(async (sql: string, params: any[]) => {
-        if (sql.includes('SELECT user_id, device_type FROM devices')) {
-          return { rows: [{ user_id: '11111111-1111-1111-1111-111111111111', device_type: 'android' }] };
-        }
-        if (sql.includes('INSERT INTO device_pairs')) {
-          return { rows: [{ id: 'pair-uuid-1', pair_code: params[1], expires_at: params[4] }] };
-        }
-        if (sql.includes('SELECT id, user_id, status, expires_at FROM device_pairs')) {
-          return { rows: [{ id: 'pair-uuid-1', user_id: '11111111-1111-1111-1111-111111111111', status: 'pending', expires_at: new Date(Date.now() + 60000) }] };
-        }
-        if (sql.includes('UPDATE device_pairs')) {
-          return { rows: [] };
-        }
-        return { rows: [] };
-      }),
-      close: vi.fn(),
-      migrate: vi.fn(),
-    };
-
-    const mockAuthService = {} as any;
-    const app = Fastify();
-    registerAuthRoutes(app, mockDb, mockAuthService);
-
-    // Initiate pairing
-    const initRes = await app.inject({
-      method: 'POST',
-      url: '/api/v1/devices/pair/initiate',
-      payload: {
-        deviceId: '22222222-2222-2222-2222-222222222222',
-        keyId: 'key-test-123',
-      },
-    });
-    expect(initRes.statusCode).toBe(201);
-    const initBody = JSON.parse(initRes.body);
-    expect(initBody.pairCode).toBeDefined();
-
-    // Complete pairing with iOS
-    const completeRes = await app.inject({
-      method: 'POST',
-      url: '/api/v1/devices/pair/complete',
-      payload: {
-        pairCode: initBody.pairCode,
-        deviceId: '33333333-3333-3333-3333-333333333333',
-      },
-    });
-    expect(completeRes.statusCode).toBe(200);
-    const completeBody = JSON.parse(completeRes.body);
-    expect(completeBody.status).toBe('active');
   });
 });

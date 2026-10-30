@@ -1,9 +1,39 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { randomBytes, createHash } from 'node:crypto';
+import { randomBytes, createHash, scryptSync, timingSafeEqual } from 'node:crypto';
 import type { Database } from '../services/db.js';
 import type { AuthService } from '../services/auth-service.js';
 import { HttpError } from '../utils/errors.js';
+
+function hashPassword(password: string): string {
+  const salt = randomBytes(16).toString('hex');
+  const hash = scryptSync(password, salt, 64).toString('hex');
+  return `${salt}:${hash}`;
+}
+
+function verifyPassword(password: string, stored: string): boolean {
+  const [salt, key] = stored.split(':');
+  if (!salt || !key) return false;
+  const hash = scryptSync(password, salt, 64);
+  const keyBuffer = Buffer.from(key, 'hex');
+  if (hash.length !== keyBuffer.length) return false;
+  return timingSafeEqual(hash, keyBuffer);
+}
+
+const registerSchema = z.object({
+  name: z.string().min(2).max(100),
+  email: z.string().email().max(255),
+  password: z.string().min(6).max(128),
+  deviceName: z.string().min(1).max(100),
+  deviceType: z.enum(['android', 'ios']),
+});
+
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1),
+  deviceName: z.string().min(1).max(100),
+  deviceType: z.enum(['android', 'ios']),
+});
 
 const googleAuthSchema = z.object({
   idToken: z.string().min(10),
@@ -26,7 +56,85 @@ export function registerAuthRoutes(
   db: Database,
   authService: AuthService
 ) {
-  // 1. Sign in / Register with Google (from Android or iOS)
+  // 1. Email & Password Registration
+  app.post('/api/v1/auth/register', async (request, reply) => {
+    const parse = registerSchema.safeParse(request.body);
+    if (!parse.success) throw new HttpError(400, 'Invalid registration parameters');
+    const { name, email, password, deviceName, deviceType } = parse.data;
+
+    const existing = await db.query('SELECT id FROM users WHERE email = $1', [email.toLowerCase()]);
+    if (existing.rows.length > 0) throw new HttpError(409, 'An account with this email already exists');
+
+    const pwHash = hashPassword(password);
+    const userRes = await db.query(
+      `INSERT INTO users (email, name, password_hash, created_at, updated_at)
+       VALUES ($1, $2, $3, NOW(), NOW())
+       RETURNING id, email, name`,
+      [email.toLowerCase(), name, pwHash]
+    );
+    const user = userRes.rows[0];
+
+    // Create Device Token
+    const rawToken = randomBytes(32).toString('base64url');
+    const tokenHash = createHash('sha256').update(rawToken).digest('hex');
+
+    const deviceRes = await db.query(
+      `INSERT INTO devices (user_id, device_name, device_type, auth_token_hash, last_seen_at)
+       VALUES ($1, $2, $3, $4, NOW())
+       RETURNING id, device_name, device_type, created_at`,
+      [user.id, deviceName, deviceType, tokenHash]
+    );
+    const device = deviceRes.rows[0];
+
+    reply.status(201).send({
+      user,
+      device: {
+        id: device.id,
+        name: device.device_name,
+        type: device.device_type,
+        token: rawToken,
+      },
+    });
+  });
+
+  // 2. Email & Password Login
+  app.post('/api/v1/auth/login', async (request, reply) => {
+    const parse = loginSchema.safeParse(request.body);
+    if (!parse.success) throw new HttpError(400, 'Invalid login credentials');
+    const { email, password, deviceName, deviceType } = parse.data;
+
+    const userRes = await db.query('SELECT id, email, name, password_hash FROM users WHERE email = $1', [email.toLowerCase()]);
+    if (userRes.rows.length === 0 || !userRes.rows[0].password_hash) {
+      throw new HttpError(401, 'Invalid email or password');
+    }
+    const user = userRes.rows[0];
+    if (!verifyPassword(password, user.password_hash)) {
+      throw new HttpError(401, 'Invalid email or password');
+    }
+
+    const rawToken = randomBytes(32).toString('base64url');
+    const tokenHash = createHash('sha256').update(rawToken).digest('hex');
+
+    const deviceRes = await db.query(
+      `INSERT INTO devices (user_id, device_name, device_type, auth_token_hash, last_seen_at)
+       VALUES ($1, $2, $3, $4, NOW())
+       RETURNING id, device_name, device_type, created_at`,
+      [user.id, deviceName, deviceType, tokenHash]
+    );
+    const device = deviceRes.rows[0];
+
+    reply.status(200).send({
+      user: { id: user.id, email: user.email, name: user.name },
+      device: {
+        id: device.id,
+        name: device.device_name,
+        type: device.device_type,
+        token: rawToken,
+      },
+    });
+  });
+
+  // 3. Optional: Sign in / Register with Google (from Android or iOS)
   app.post('/api/v1/auth/google', async (request, reply) => {
     const parse = googleAuthSchema.safeParse(request.body);
     if (!parse.success) throw new HttpError(400, 'Invalid Google auth request parameters');
