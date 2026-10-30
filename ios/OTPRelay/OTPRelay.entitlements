@@ -7,7 +7,9 @@
 	<key>com.apple.developer.authentication-services.autofill-credential-provider</key>
 	<true/>
 	<key>com.apple.security.application-groups</key>
-	<array/>
+	<array>
+		<string>$(RELAY_APP_GROUP)</string>
+	</array>
 	<key>keychain-access-groups</key>
 	<array>
 		<string>$(RELAY_SIGNING_PREFIX)$(RELAY_KEYCHAIN_SUFFIX)</string>
