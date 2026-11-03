@@ -17,6 +17,15 @@ object OtpExtractor {
         return extract(message)
     }
 
+    /** When no sender filter is configured, relay the complete SMS body. */
+    fun extractForRelay(sender: String?, approvedSenders: Collection<String>, message: String): String? {
+        if (approvedSenders.isEmpty()) {
+            val body = message.trim()
+            return body.takeIf { it.isNotEmpty() && it.toByteArray(Charsets.UTF_8).size <= 1024 }
+        }
+        return extractApproved(sender, approvedSenders, message)
+    }
+
     fun extract(message: String): String? {
         // SMS Retriever app hashes are 11 base64 characters on a separate trailing line.
         // Never use a bare alphanumeric search: it can mistake the app hash for the OTP.

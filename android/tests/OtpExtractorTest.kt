@@ -35,6 +35,7 @@ fun main() {
     check(OtpExtractor.extractApproved("EASYPAISA", listOf(" easypaisa "), sample) == "Ab7Cd9Ef2G"); count++
     check(OtpExtractor.extractApproved("UNAPPROVED", listOf("EASYPAISA"), sample) == null); count++
     check(OtpExtractor.extractApproved("EASYPAISA", emptyList(), sample) == null); count++
+    check(OtpExtractor.extractForRelay("EASYPAISA", emptyList(), "Normal SMS text 123!") == "Normal SMS text 123!"); count++
     check(OtpExtractor.extractApproved(null, listOf("EASYPAISA"), sample) == null); count++
     check(OtpExtractor.extractApproved("EASYPAISA", listOf("EASY"), sample) == null); count++
     println("Passed $count synthetic extractor tests (no OTP values logged).")

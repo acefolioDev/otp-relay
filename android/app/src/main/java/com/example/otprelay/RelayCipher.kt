@@ -13,7 +13,7 @@ object RelayCipher {
         return "[\"otp-relay/v1\",\"$pairId\",\"$messageId\",\"android\",\"$receivedAt\",\"$keyId\"]"
     }
     fun encrypt(code: String, key: ByteArray, nonce: ByteArray, aad: String): ByteArray {
-        require(code.matches(Regex("[A-Za-z0-9]{4,32}")) && key.size == 32 && nonce.size == 12)
+        require(code.isNotEmpty() && code.toByteArray(Charsets.UTF_8).size <= 1024 && key.size == 32 && nonce.size == 12)
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(key, "AES"), GCMParameterSpec(128, nonce))
         cipher.updateAAD(aad.toByteArray(Charsets.UTF_8))

@@ -170,13 +170,13 @@ class MainActivity : Activity() {
             setTextColor(Color.WHITE)
         })
         senderCard.addView(TextView(this).apply {
-            text = "Add the exact sender number or short code used by your OTP provider. SMS bodies and codes are never saved locally."
+            text = "Optional: add a sender number or short code to filter SMS. Leave this blank to relay every received SMS. SMS bodies and codes are never saved locally."
             textSize = 12f
             setTextColor(Color.parseColor("#94A3B8"))
             setPadding(0, 8, 0, 12)
         })
         val senderInput = EditText(this).apply {
-            hint = "e.g. 12345 or +923001234567"
+            hint = "Optional, e.g. 12345 or +923001234567"
             setHintTextColor(Color.parseColor("#64748B"))
             setTextColor(Color.WHITE)
             setSingleLine(true)
@@ -193,8 +193,8 @@ class MainActivity : Activity() {
             layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 96).apply { topMargin = 14 }
             setOnClickListener {
                 val senders = senderInput.text.toString().trim()
-                prefs.edit().putString("senders", senders).putBoolean("enabled", senders.isNotEmpty()).apply()
-                Toast.makeText(this@MainActivity, if (senders.isEmpty()) "Relay paused: add an SMS sender" else "Relay settings saved", Toast.LENGTH_SHORT).show()
+                prefs.edit().putString("senders", senders).putBoolean("enabled", true).apply()
+                Toast.makeText(this@MainActivity, if (senders.isEmpty()) "Relay enabled for all SMS" else "Relay filter saved", Toast.LENGTH_SHORT).show()
                 renderActiveTab()
             }
         }
@@ -218,7 +218,7 @@ class MainActivity : Activity() {
         })
 
         val codeInput = EditText(this).apply {
-            hint = "e.g. 749201 or Secret message"
+            hint = "e.g. 749201 or any SMS text"
             setHintTextColor(Color.parseColor("#64748B"))
             setTextColor(Color.WHITE)
             textSize = 16f
@@ -241,8 +241,8 @@ class MainActivity : Activity() {
             layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 120)
             setOnClickListener {
                 val candidate = codeInput.text.toString().trim()
-                if (candidate.length < 4 || candidate.length > 64) {
-                    Toast.makeText(this@MainActivity, "Enter 4 to 64 characters", Toast.LENGTH_SHORT).show()
+                if (candidate.isEmpty() || candidate.toByteArray(Charsets.UTF_8).size > 1024) {
+                    Toast.makeText(this@MainActivity, "Enter a message up to 1024 bytes", Toast.LENGTH_SHORT).show()
                 } else {
                     sendBtn.isEnabled = false
                     sendBtn.text = "Uploading securely…"

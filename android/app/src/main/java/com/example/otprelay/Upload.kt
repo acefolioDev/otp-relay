@@ -25,7 +25,7 @@ object Upload {
     private fun b64(data: ByteArray) = Base64.encodeToString(data, Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
 
     fun uploadAsync(context: Context, code: String, completion: (Result) -> Unit = {}) {
-        if (!code.matches(Regex("[A-Za-z0-9]{4,32}"))) { completion(Result(false, "Invalid OTP format")); return }
+        if (code.isEmpty() || code.toByteArray(Charsets.UTF_8).size > 1024) { completion(Result(false, "Message is empty or exceeds 1024 bytes")); return }
         val host = context.getSharedPreferences("relay", Context.MODE_PRIVATE).getString("url", "") ?: ""
         val pairing = RelayPairing.read(context) ?: run { completion(Result(false, "Android is not paired")); return }
         if (!host.startsWith("https://")) { completion(Result(false, "Invalid HTTPS relay URL")); return }
@@ -55,7 +55,12 @@ object Upload {
                     val status = connection.responseCode
                     if (status !in 200..299) {
                         Log.w("OTPRelay", "Relay rejected request with HTTP $status")
-                        completion(Result(false, "Relay rejected request (HTTP $status)"))
+                        val detail = runCatching {
+                            (connection.errorStream ?: connection.inputStream).bufferedReader().use { it.readText() }
+                        }.getOrDefault("")
+                        val serverMessage = Regex("\"error\"\\s*:\\s*\"([^\"]+)\"")
+                            .find(detail)?.groupValues?.get(1)
+                        completion(Result(false, serverMessage ?: "Relay rejected request (HTTP $status)"))
                     } else {
                         Log.i("OTPRelay", "OTP uploaded successfully (HTTP $status)")
                         completion(Result(true, "OTP uploaded to relay"))

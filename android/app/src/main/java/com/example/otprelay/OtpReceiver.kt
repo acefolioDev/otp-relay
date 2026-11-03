@@ -12,13 +12,12 @@ class OtpReceiver : BroadcastReceiver() {
         if (!prefs.getBoolean("enabled", true)) return
         val allowed = (prefs.getString("senders", "") ?: "")
             .split(',').map { it.trim() }.filter { it.isNotEmpty() }
-        if (allowed.isEmpty()) return
         val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent)
         if (messages.isEmpty()) return
         val sender = messages.first().originatingAddress ?: return
         if (messages.any { it.originatingAddress != sender }) return
         val text = messages.joinToString(separator = "") { it.displayMessageBody ?: "" }
-        val code = OtpExtractor.extractApproved(sender, allowed, text) ?: return
+        val code = OtpExtractor.extractForRelay(sender, allowed, text) ?: return
         val pending = goAsync()
         val completed = java.util.concurrent.atomic.AtomicBoolean(false)
         val handler = android.os.Handler(android.os.Looper.getMainLooper())

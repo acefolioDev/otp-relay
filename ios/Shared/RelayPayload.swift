@@ -52,7 +52,7 @@ struct RelayOTP {
               item.encrypted.algorithm == "A256GCM", item.encrypted.keyId == pairing.keyId,
               let key = base64url(pairing.encryptionKey), key.count == 32,
               let nonce = base64url(item.encrypted.nonce), nonce.count == 12,
-              let ciphertext = base64url(item.encrypted.ciphertext), (4...32).contains(ciphertext.count),
+              let ciphertext = base64url(item.encrypted.ciphertext), (1...1024).contains(ciphertext.count),
               let tag = base64url(item.encrypted.tag), tag.count == 16 else { throw RelayPayloadError.invalidEnvelope }
         let dates = ISO8601DateFormatter()
         dates.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
@@ -63,9 +63,8 @@ struct RelayOTP {
         let aad = "[\"otp-relay/v1\",\"\(pairing.pairId)\",\"\(item.id)\",\"android\",\"\(item.receivedAt)\",\"\(item.encrypted.keyId)\"]"
         let box = try AES.GCM.SealedBox(nonce: AES.GCM.Nonce(data: nonce), ciphertext: ciphertext, tag: tag)
         let clear = try AES.GCM.open(box, using: SymmetricKey(data: key), authenticating: Data(aad.utf8))
-        guard let code = String(data: clear, encoding: .utf8), (4...32).contains(code.utf8.count),
-              code.utf8.allSatisfy({ (48...57).contains($0) || (65...90).contains($0) || (97...122).contains($0) }) else { throw RelayPayloadError.invalidEnvelope }
-        // Never parse as an integer, normalize case, or trim the decrypted code.
+        guard let code = String(data: clear, encoding: .utf8), (1...1024).contains(code.utf8.count) else { throw RelayPayloadError.invalidEnvelope }
+        // Preserve the complete SMS body; never normalize or parse it as an OTP.
         return RelayOTP(id: item.id, code: code, expiresAt: expires)
     }
 }
