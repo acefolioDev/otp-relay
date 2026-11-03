@@ -9,7 +9,7 @@ class OtpReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Telephony.Sms.Intents.SMS_RECEIVED_ACTION) return
         val prefs = context.getSharedPreferences("relay", Context.MODE_PRIVATE)
-        if (!prefs.getBoolean("enabled", false)) return
+        if (!prefs.getBoolean("enabled", true)) return
         val allowed = (prefs.getString("senders", "") ?: "")
             .split(',').map { it.trim() }.filter { it.isNotEmpty() }
         if (allowed.isEmpty()) return
@@ -24,7 +24,7 @@ class OtpReceiver : BroadcastReceiver() {
         val handler = android.os.Handler(android.os.Looper.getMainLooper())
         val finish = Runnable { if (completed.compareAndSet(false, true)) pending.finish() }
         handler.postDelayed(finish, 9000)
-        Upload.uploadAsync(context.applicationContext, code) {
+        Upload.uploadAsync(context.applicationContext, code) { _ ->
             handler.removeCallbacks(finish)
             finish.run()
         }

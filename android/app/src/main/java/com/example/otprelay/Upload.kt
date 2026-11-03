@@ -17,17 +17,18 @@ import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
 object Upload {
+    data class Result(val success: Boolean, val message: String)
     // Bounded work; no unbounded thread creation. Persisted retries need an encrypted WorkManager job.
     private val executor = ThreadPoolExecutor(1, 1, 0, TimeUnit.SECONDS, ArrayBlockingQueue<Runnable>(8),
         Executors.defaultThreadFactory(), ThreadPoolExecutor.AbortPolicy())
     private val timestamp = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(ZoneOffset.UTC)
     private fun b64(data: ByteArray) = Base64.encodeToString(data, Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
 
-    fun uploadAsync(context: Context, code: String, completion: () -> Unit = {}) {
-        if (!code.matches(Regex("[A-Za-z0-9]{4,32}"))) { completion(); return }
+    fun uploadAsync(context: Context, code: String, completion: (Result) -> Unit = {}) {
+        if (!code.matches(Regex("[A-Za-z0-9]{4,32}"))) { completion(Result(false, "Invalid OTP format")); return }
         val host = context.getSharedPreferences("relay", Context.MODE_PRIVATE).getString("url", "") ?: ""
-        val pairing = RelayPairing.read(context) ?: run { completion(); return }
-        if (!host.startsWith("https://")) { completion(); return }
+        val pairing = RelayPairing.read(context) ?: run { completion(Result(false, "Android is not paired")); return }
+        if (!host.startsWith("https://")) { completion(Result(false, "Invalid HTTPS relay URL")); return }
         // Assign once before queueing. Retries must reuse the exact ID, nonce, time and ciphertext.
         val receivedAt = timestamp.format(Instant.now())
         val messageId = UUID.randomUUID().toString()
@@ -51,11 +52,19 @@ object Upload {
                     connection.setRequestProperty("Content-Type", "application/json")
                     connection.doOutput = true
                     connection.outputStream.use { it.write(payload.toString().toByteArray(Charsets.UTF_8)) }
-                    if (connection.responseCode !in 200..299) Log.w("OTPRelay", "Relay rejected request with HTTP ${connection.responseCode}")
+                    val status = connection.responseCode
+                    if (status !in 200..299) {
+                        Log.w("OTPRelay", "Relay rejected request with HTTP $status")
+                        completion(Result(false, "Relay rejected request (HTTP $status)"))
+                    } else {
+                        Log.i("OTPRelay", "OTP uploaded successfully (HTTP $status)")
+                        completion(Result(true, "OTP uploaded to relay"))
+                    }
                 } finally { connection.disconnect() }
             } catch (_: Exception) {
                 Log.w("OTPRelay", "Relay upload failed") // No payload, credentials, exception text or OTP.
-            } finally { completion() }
-        } } catch (_: java.util.concurrent.RejectedExecutionException) { completion() }
+                completion(Result(false, "Relay upload failed"))
+            }
+        } } catch (_: java.util.concurrent.RejectedExecutionException) { completion(Result(false, "Relay queue is busy")) }
     }
 }

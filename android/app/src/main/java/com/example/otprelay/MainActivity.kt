@@ -155,6 +155,52 @@ class MainActivity : Activity() {
         })
         contentContainer.addView(statusCard)
 
+        val senderCard = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(40, 30, 40, 30)
+            background = createCardDrawable("#1E293B")
+            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                bottomMargin = 24
+            }
+        }
+        senderCard.addView(TextView(this).apply {
+            text = "SMS Relay Settings"
+            textSize = 15f
+            typeface = Typeface.DEFAULT_BOLD
+            setTextColor(Color.WHITE)
+        })
+        senderCard.addView(TextView(this).apply {
+            text = "Add the exact sender number or short code used by your OTP provider. SMS bodies and codes are never saved locally."
+            textSize = 12f
+            setTextColor(Color.parseColor("#94A3B8"))
+            setPadding(0, 8, 0, 12)
+        })
+        val senderInput = EditText(this).apply {
+            hint = "e.g. 12345 or +923001234567"
+            setHintTextColor(Color.parseColor("#64748B"))
+            setTextColor(Color.WHITE)
+            setSingleLine(true)
+            setText(prefs.getString("senders", "") ?: "")
+            background = createCardDrawable("#0F172A", strokeColor = "#334155")
+            setPadding(24, 20, 24, 20)
+        }
+        senderCard.addView(senderInput)
+        val saveSender = Button(this).apply {
+            text = "Save Relay Settings"
+            isAllCaps = false
+            setTextColor(Color.parseColor("#0F172A"))
+            background = createCardDrawable("#38BDF8")
+            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 96).apply { topMargin = 14 }
+            setOnClickListener {
+                val senders = senderInput.text.toString().trim()
+                prefs.edit().putString("senders", senders).putBoolean("enabled", senders.isNotEmpty()).apply()
+                Toast.makeText(this@MainActivity, if (senders.isEmpty()) "Relay paused: add an SMS sender" else "Relay settings saved", Toast.LENGTH_SHORT).show()
+                renderActiveTab()
+            }
+        }
+        senderCard.addView(saveSender)
+        contentContainer.addView(senderCard)
+
         // Quick Send Message / Test Code Card
         val sendCard = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -185,7 +231,8 @@ class MainActivity : Activity() {
         }
         sendCard.addView(codeInput)
 
-        val sendBtn = Button(this).apply {
+        lateinit var sendBtn: Button
+        sendBtn = Button(this).apply {
             text = "Encrypt & Relay to iPhone"
             isAllCaps = false
             setTextColor(Color.parseColor("#0F172A"))
@@ -197,11 +244,23 @@ class MainActivity : Activity() {
                 if (candidate.length < 4 || candidate.length > 64) {
                     Toast.makeText(this@MainActivity, "Enter 4 to 64 characters", Toast.LENGTH_SHORT).show()
                 } else {
-                    Upload.uploadAsync(this@MainActivity, candidate)
-                    relayedMessages.add(0, MessageEntry("Manual / Test", candidate, candidate))
-                    codeInput.text.clear()
-                    Toast.makeText(this@MainActivity, "Encrypted & Relayed successfully", Toast.LENGTH_SHORT).show()
-                    renderActiveTab()
+                    sendBtn.isEnabled = false
+                    sendBtn.text = "Uploading securely…"
+                    Upload.uploadAsync(this@MainActivity, candidate) { result ->
+                        runOnUiThread {
+                            sendBtn.isEnabled = true
+                            sendBtn.text = "Encrypt & Relay to iPhone"
+                            if (result.success) {
+                                // Keep no OTP history on disk; this in-memory entry is cleared on restart.
+                                relayedMessages.add(0, MessageEntry("Manual / Test", candidate, candidate))
+                                codeInput.text.clear()
+                                Toast.makeText(this@MainActivity, result.message, Toast.LENGTH_SHORT).show()
+                                renderActiveTab()
+                            } else {
+                                Toast.makeText(this@MainActivity, result.message, Toast.LENGTH_LONG).show()
+                            }
+                        }
+                    }
                 }
             }
         }
