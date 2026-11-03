@@ -606,8 +606,7 @@ struct ContentView: View {
                     return
                 }
                 if http.statusCode == 200 {
-                    guard let data = data,
-                          let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                    guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                           let pairingData = json["pairing"] as? [String: Any],
                           let pairingJsonData = try? JSONSerialization.data(withJSONObject: pairingData),
                           let pairingJsonString = String(data: pairingJsonData, encoding: .utf8) else {
