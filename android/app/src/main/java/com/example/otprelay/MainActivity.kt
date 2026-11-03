@@ -367,9 +367,20 @@ class MainActivity : Activity() {
 
                             runOnUiThread {
                                 if (resCode in 200..299 && !serverCode.isNullOrEmpty()) {
-                                    val syncedBundle = newBundle.copy(pinCode = serverCode)
+                                    // The relay authenticates uploads with the registered Android
+                                    // device token and routes them by the server-created pair ID.
+                                    // The locally generated values are only inputs to initiation.
+                                    val serverPairId = Regex("\"pairId\"\\s*:\\s*\"([^\"]+)\"")
+                                        .find(resBody)?.groupValues?.get(1) ?: newBundle.pairId
+                                    val syncedBundle = newBundle.copy(
+                                        pairId = serverPairId,
+                                        pinCode = serverCode,
+                                        token = deviceToken
+                                    )
                                     currentPairing = syncedBundle
                                     pinDisplay.text = serverCode
+                                    SecretStore.save(this@MainActivity,
+                                        """{"role":"android","pairId":"${syncedBundle.pairId}","token":"$deviceToken","keyId":"${syncedBundle.keyId}","encryptionKey":"${syncedBundle.encryptionKey}"}""")
                                     pairStatusLabel.text = "PIN is active! Enter $serverCode on your iPhone."
                                     pairStatusLabel.setTextColor(Color.parseColor("#38BDF8"))
                                     Toast.makeText(this@MainActivity, "PIN $serverCode saved to server!", Toast.LENGTH_SHORT).show()
