@@ -44,6 +44,7 @@ const googleAuthSchema = z.object({
 const pairInitiateSchema = z.object({
   deviceId: z.string().min(1).max(64),
   keyId: z.string().min(1).max(64),
+  encryptionKey: z.string().min(30).max(128).optional(),
 });
 
 const pairCompleteSchema = z.object({
@@ -192,7 +193,7 @@ export function registerAuthRoutes(
 
     const parse = pairInitiateSchema.safeParse(request.body);
     if (!parse.success) throw new HttpError(400, 'Invalid initiate parameters');
-    const { deviceId, keyId } = parse.data;
+    const { deviceId, keyId, encryptionKey } = parse.data;
 
     // Verify device exists and belongs to the authenticated caller.
     const deviceRes = await db.query('SELECT id, user_id, device_type, auth_token_hash FROM devices WHERE id = $1', [deviceId]);
@@ -207,10 +208,10 @@ export function registerAuthRoutes(
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
 
     const pairRes = await db.query(
-      `INSERT INTO device_pairs (user_id, pair_code, android_device_id, key_id, expires_at, status)
-       VALUES ($1, $2, $3, $4, $5, 'pending')
+      `INSERT INTO device_pairs (user_id, pair_code, android_device_id, key_id, encryption_key, expires_at, status)
+       VALUES ($1, $2, $3, $4, $5, $6, 'pending')
        RETURNING id, pair_code, expires_at`,
-      [device.user_id, pairCode, device.device_type === 'android' ? deviceId : null, keyId, expiresAt]
+      [device.user_id, pairCode, device.device_type === 'android' ? deviceId : null, keyId, encryptionKey || null, expiresAt]
     );
 
     reply.status(201).send({
@@ -222,16 +223,28 @@ export function registerAuthRoutes(
 
   // 3. Complete Device Pairing (e.g., iOS scans QR code or enters pair code)
   app.post('/api/v1/devices/pair/complete', async (request, reply) => {
+    // Require the calling device to authenticate with its Bearer token.
+    const authHeader = request.headers.authorization ?? '';
+    const callerToken = /^Bearer [A-Za-z0-9_-]{43,128}$/.test(authHeader) ? authHeader.slice(7) : '';
+    if (!callerToken) {
+      reply.header('WWW-Authenticate', 'Bearer');
+      throw new HttpError(401, 'Unauthorized');
+    }
+    const callerTokenHash = createHash('sha256').update(callerToken).digest('hex');
+
     const parse = pairCompleteSchema.safeParse(request.body);
     if (!parse.success) throw new HttpError(400, 'Invalid complete parameters');
     const { pairCode, deviceId } = parse.data;
 
-    const deviceRes = await db.query('SELECT user_id, device_type FROM devices WHERE id = $1', [deviceId]);
+    const deviceRes = await db.query('SELECT id, user_id, device_type, auth_token_hash FROM devices WHERE id = $1', [deviceId]);
     if (deviceRes.rows.length === 0) throw new HttpError(404, 'Device not found');
     const device = deviceRes.rows[0];
 
+    // Confirm the caller's token matches the device being paired.
+    if (device.auth_token_hash !== callerTokenHash) throw new HttpError(403, 'Token does not match the specified device');
+
     const pairRes = await db.query(
-      `SELECT id, user_id, status, expires_at FROM device_pairs WHERE pair_code = $1`,
+      `SELECT id, user_id, key_id, encryption_key, status, expires_at FROM device_pairs WHERE pair_code = $1`,
       [pairCode]
     );
     if (pairRes.rows.length === 0) throw new HttpError(404, 'Invalid pair code');
@@ -253,6 +266,13 @@ export function registerAuthRoutes(
       message: 'Pairing complete and verified',
       pairId: pair.id,
       status: 'active',
+      pairing: {
+        role: 'iphone',
+        pairId: pair.id,
+        token: callerToken,
+        keyId: pair.key_id,
+        encryptionKey: pair.encryption_key,
+      },
     });
   });
 }

@@ -34,6 +34,8 @@ struct ContentView: View {
     // Pairing State
     @State private var showScanner = false
     @State private var showPinSheet = false
+    @State private var showManualJsonSheet = false
+    @State private var manualJsonInput = ""
     @State private var pinCodeInput = ""
     @State private var pairingStatus = "No device paired yet."
     @State private var isPairingActive = false
@@ -90,6 +92,9 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showPinSheet) {
             pinEntrySheet
+        }
+        .sheet(isPresented: $showManualJsonSheet) {
+            manualJsonSheet
         }
     }
 
@@ -261,6 +266,13 @@ struct ContentView: View {
                     VStack(spacing: 14) {
                         LiquidGlassButton(title: "Scan Android QR Code", icon: "qrcode.viewfinder", isProminent: true) {
                             showScanner = true
+                        }
+
+                        LiquidGlassButton(title: "Paste Pairing Payload (Simulator)", icon: "doc.on.clipboard", isProminent: false) {
+                            if let clip = UIPasteboard.general.string, clip.contains("role") {
+                                manualJsonInput = clip
+                            }
+                            showManualJsonSheet = true
                         }
 
                         LiquidGlassButton(title: "Enter 8-Digit PIN Code", icon: "number", isProminent: false) {
@@ -457,6 +469,48 @@ struct ContentView: View {
         .presentationDetents([.fraction(0.45)])
     }
 
+    // MARK: - Manual JSON Sheet (for Simulator / No-Camera)
+    private var manualJsonSheet: some View {
+        ZStack {
+            LiquidGlassBackground()
+            VStack(spacing: 18) {
+                Text("Paste Pairing JSON")
+                    .font(.title2.bold())
+                    .foregroundStyle(.white)
+
+                Text("Paste the pairing payload from the Android app or provision file.")
+                    .font(.subheadline)
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal)
+
+                TextEditor(text: $manualJsonInput)
+                    .font(.system(size: 13, design: .monospaced))
+                    .foregroundStyle(.white)
+                    .padding(8)
+                    .background(Color.white.opacity(0.08))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .frame(height: 120)
+                    .padding(.horizontal)
+
+                HStack(spacing: 16) {
+                    LiquidGlassButton(title: "Paste Clipboard", icon: "doc.on.clipboard", isProminent: false) {
+                        if let clip = UIPasteboard.general.string {
+                            manualJsonInput = clip
+                        }
+                    }
+                    LiquidGlassButton(title: "Apply Pairing", icon: "checkmark", isProminent: true) {
+                        showManualJsonSheet = false
+                        handleScannedQRPayload(manualJsonInput.trimmingCharacters(in: .whitespacesAndNewlines))
+                    }
+                }
+                .padding(.horizontal)
+            }
+            .padding()
+        }
+        .presentationDetents([.fraction(0.55)])
+    }
+
     // MARK: - Logic & Actions
     private func checkCurrentPairing() {
         if let token = RelayToken.read(), !token.isEmpty {
@@ -552,8 +606,23 @@ struct ContentView: View {
                     return
                 }
                 if http.statusCode == 200 {
-                    self.isPairingActive = true
-                    self.pairingStatus = "Pairing complete and verified!"
+                    guard let data = data,
+                          let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                          let pairingData = json["pairing"] as? [String: Any],
+                          let pairingJsonData = try? JSONSerialization.data(withJSONObject: pairingData),
+                          let pairingJsonString = String(data: pairingJsonData, encoding: .utf8) else {
+                        self.pairingStatus = "Failed to parse pairing keys."
+                        return
+                    }
+
+                    do {
+                        try RelayToken.save(pairingJsonString)
+                        self.isPairingActive = true
+                        self.pairingStatus = "Pairing complete and verified!"
+                        self.startListening()
+                    } catch {
+                        self.pairingStatus = "Failed to save pairing to Keychain."
+                    }
                 } else {
                     let msg = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["error"] as? String
                     self.pairingStatus = "Pairing failed: \(msg ?? "HTTP \(http.statusCode)")"

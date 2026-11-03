@@ -60,7 +60,7 @@
 		83CEACE86D205E2BE5CF0E76 /* QRScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRScannerView.swift; sourceTree = "<group>"; };
 		8DD811E40E52CDF194483E57 /* RelayClientIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelayClientIntegrationTests.swift; sourceTree = "<group>"; };
 		8E1054C1312572D230489D55 /* RelayClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelayClient.swift; sourceTree = "<group>"; };
-		9455CC3349033843E047B2BD /* OTPProvider.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = OTPProvider.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		9455CC3349033843E047B2BD /* OTPProvider.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = OTPProvider.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		971CB6C01B907899423C2433 /* OTPRelayIntegrationTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = OTPRelayIntegrationTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		EC2D3850CA12B5DF3707D7A0 /* OTPRelay.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = OTPRelay.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -199,7 +199,6 @@
 						ProvisioningStyle = Automatic;
 					};
 					D2438F1AC07CEBE21E03D8AE = {
-						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -278,6 +277,7 @@
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = OTPProvider/OTPProvider.entitlements;
+				DEVELOPMENT_TEAM = CT8N97PHFP;
 				INFOPLIST_FILE = "OTPProvider/Extension-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -296,6 +296,7 @@
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = OTPProvider/OTPProvider.entitlements;
+				DEVELOPMENT_TEAM = CT8N97PHFP;
 				INFOPLIST_FILE = "OTPProvider/Extension-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

@@ -62,11 +62,13 @@ export class PostgresDatabase implements Database {
         android_device_id UUID REFERENCES devices(id) ON DELETE SET NULL,
         ios_device_id UUID REFERENCES devices(id) ON DELETE SET NULL,
         key_id VARCHAR(64),
+        encryption_key TEXT,
         status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'active', 'revoked')),
         expires_at TIMESTAMPTZ,
         created_at TIMESTAMPTZ DEFAULT NOW(),
         updated_at TIMESTAMPTZ DEFAULT NOW()
       );
+      ALTER TABLE device_pairs ADD COLUMN IF NOT EXISTS encryption_key TEXT;
 
       CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
       CREATE INDEX IF NOT EXISTS idx_devices_user ON devices(user_id);

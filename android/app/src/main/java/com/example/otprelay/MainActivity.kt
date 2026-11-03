@@ -259,6 +259,11 @@ class MainActivity : Activity() {
 
     // TAB 2: Device Pairing (QR Code & 8-Digit PIN)
     private fun renderPairingView() {
+        val prefs = getSharedPreferences("relay", MODE_PRIVATE)
+        val serverUrl = prefs.getString("url", BuildConfig.RELAY_BASE_URL) ?: BuildConfig.RELAY_BASE_URL
+        val deviceId = prefs.getString("device_id", "") ?: ""
+        val deviceToken = prefs.getString("device_token", "") ?: ""
+
         val pairing = currentPairing ?: PairingGenerator.generateNewPairing().also { currentPairing = it }
 
         val card = LinearLayout(this).apply {
@@ -276,7 +281,7 @@ class MainActivity : Activity() {
         })
 
         card.addView(TextView(this).apply {
-            text = "Scan this QR code with the OTP Relay app on your iPhone to pair with zero-knowledge end-to-end encryption."
+            text = "Enter this 8-digit PIN code or scan QR on your iPhone to pair with zero-knowledge end-to-end encryption."
             textSize = 13f
             gravity = Gravity.CENTER
             setTextColor(Color.parseColor("#94A3B8"))
@@ -294,9 +299,9 @@ class MainActivity : Activity() {
         }
         card.addView(qrImageView)
 
-        // PIN Code Fallback Section
+        // PIN Code Section
         card.addView(TextView(this).apply {
-            text = "OR ENTER 8-DIGIT PAIRING PIN:"
+            text = "8-DIGIT PAIRING PIN FOR IPHONE:"
             textSize = 11f
             typeface = Typeface.DEFAULT_BOLD
             setTextColor(Color.parseColor("#64748B"))
@@ -313,25 +318,83 @@ class MainActivity : Activity() {
         }
         card.addView(pinDisplay)
 
-        // Regenerate Button
+        val pairStatusLabel = TextView(this).apply {
+            text = if (deviceId.isEmpty()) "Sign in on Account tab first to save PIN to cloud" else "Ready to pair with iPhone"
+            textSize = 12f
+            gravity = Gravity.CENTER
+            setTextColor(Color.parseColor("#94A3B8"))
+            setPadding(0, 12, 0, 0)
+        }
+        card.addView(pairStatusLabel)
+
+        // Generate / Sync Button
         val regenBtn = Button(this).apply {
-            text = "Generate New Pairing Code"
+            text = "Generate & Save PIN to Cloud"
             isAllCaps = false
             setTextColor(Color.WHITE)
-            background = createCardDrawable("#334155")
+            background = createCardDrawable("#0284C7")
             layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 110).apply {
-                topMargin = 32
+                topMargin = 24
             }
             setOnClickListener {
-                currentPairing = PairingGenerator.generateNewPairing()
-                // Save locally into SecretStore
-                val newAndroidPairing = """{"role":"android","pairId":"${currentPairing!!.pairId}","token":"${currentPairing!!.token}","keyId":"${currentPairing!!.keyId}","encryptionKey":"${currentPairing!!.encryptionKey}"}"""
+                val newBundle = PairingGenerator.generateNewPairing()
+                currentPairing = newBundle
+                pinDisplay.text = newBundle.pinCode
+                qrImageView.setImageBitmap(PairingGenerator.createQRCodeBitmap(newBundle.qrPayload, 480))
+
+                val newAndroidPairing = """{"role":"android","pairId":"${newBundle.pairId}","token":"${newBundle.token}","keyId":"${newBundle.keyId}","encryptionKey":"${newBundle.encryptionKey}"}"""
                 SecretStore.save(this@MainActivity, newAndroidPairing)
-                Toast.makeText(this@MainActivity, "New pairing generated and applied locally.", Toast.LENGTH_SHORT).show()
-                renderActiveTab()
+
+                if (deviceId.isNotEmpty() && deviceToken.isNotEmpty()) {
+                    pairStatusLabel.text = "Syncing PIN to server..."
+                    Thread {
+                        try {
+                            val conn = URL("$serverUrl/api/v1/devices/pair/initiate").openConnection() as HttpURLConnection
+                            conn.requestMethod = "POST"
+                            conn.setRequestProperty("Content-Type", "application/json")
+                            conn.setRequestProperty("Authorization", "Bearer $deviceToken")
+                            conn.doOutput = true
+                            conn.connectTimeout = 10000
+                            conn.readTimeout = 10000
+                            val payload = """{"deviceId":"$deviceId","keyId":"${newBundle.keyId}","encryptionKey":"${newBundle.encryptionKey}"}"""
+                            OutputStreamWriter(conn.outputStream, "UTF-8").use { it.write(payload) }
+
+                            val resCode = conn.responseCode
+                            val resBody = if (resCode in 200..299) conn.inputStream.bufferedReader().readText() else conn.errorStream?.bufferedReader()?.readText() ?: ""
+                            
+                            val codePattern = Regex("\"pairCode\"\\s*:\\s*\"([^\"]+)\"")
+                            val serverCode = codePattern.find(resBody)?.groupValues?.get(1)
+
+                            runOnUiThread {
+                                if (resCode in 200..299 && !serverCode.isNullOrEmpty()) {
+                                    val syncedBundle = newBundle.copy(pinCode = serverCode)
+                                    currentPairing = syncedBundle
+                                    pinDisplay.text = serverCode
+                                    pairStatusLabel.text = "PIN is active! Enter $serverCode on your iPhone."
+                                    pairStatusLabel.setTextColor(Color.parseColor("#38BDF8"))
+                                    Toast.makeText(this@MainActivity, "PIN $serverCode saved to server!", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    pairStatusLabel.text = "Generated locally. Server sync failed (HTTP $resCode)"
+                                }
+                            }
+                        } catch (e: Exception) {
+                            runOnUiThread {
+                                pairStatusLabel.text = "Network error syncing PIN: ${e.message}"
+                            }
+                        }
+                    }.start()
+                } else {
+                    pairStatusLabel.text = "Generated locally. Sign in on Account tab to sync to iPhone."
+                    Toast.makeText(this@MainActivity, "Sign in on Account tab to sync PIN with iPhone", Toast.LENGTH_LONG).show()
+                }
             }
         }
         card.addView(regenBtn)
+
+        // Automatically trigger sync if not yet synced and user is signed in
+        if (deviceId.isNotEmpty() && deviceToken.isNotEmpty() && currentPairing == null) {
+            regenBtn.performClick()
+        }
 
         contentContainer.addView(card)
     }
