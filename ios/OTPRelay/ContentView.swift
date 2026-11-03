@@ -541,8 +541,8 @@ struct ContentView: View {
                             self.messages.insert(newItem, at: 0)
                         }
                     }
-                case .failure:
-                    break
+                case .failure(let error):
+                    self.pairingStatus = "Relay error: \(error.localizedDescription)"
                 }
                 if self.isListening {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 3) {

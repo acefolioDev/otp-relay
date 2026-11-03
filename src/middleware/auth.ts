@@ -49,7 +49,7 @@ export function installAuth(app: FastifyInstance, config: Config, store: Store, 
              ON (d.device_type = 'android' AND dp.android_device_id = d.id)
              OR (d.device_type = 'ios'     AND dp.ios_device_id     = d.id)
            WHERE d.auth_token_hash = $1
-             AND d.device_type     = $2
+             AND (d.device_type = $2 OR ($2 = 'ios' AND d.device_type = 'android'))
              AND dp.status         = 'active'
            LIMIT 1`,
           [tokenHash, deviceType]

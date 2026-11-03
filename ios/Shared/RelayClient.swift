@@ -91,8 +91,11 @@ enum RelayClient {
             request.timeoutInterval = waitSeconds > 0 ? 30 : 5
             let task = session.dataTask(with: request) { data, response, error in
                 if let error { completion(.failure(error)); return }
-                guard let http = response as? HTTPURLResponse, http.statusCode == 200, let data else {
+                guard let http = response as? HTTPURLResponse else {
                     completion(.failure(RelayPayloadError.invalidEnvelope)); return
+                }
+                guard http.statusCode == 200, let data else {
+                    completion(.failure(RelayPayloadError.server(status: http.statusCode))); return
                 }
                 do { completion(.success(try RelayOTP.decode(data, pairing: pairing))) }
                 catch { completion(.failure(RelayPayloadError.invalidEnvelope)) }

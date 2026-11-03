@@ -19,7 +19,17 @@ struct RelayPairing: Decodable {
     }
 }
 
-enum RelayPayloadError: Error { case invalidPairing, invalidEnvelope }
+enum RelayPayloadError: LocalizedError {
+    case invalidPairing, invalidEnvelope, server(status: Int)
+
+    var errorDescription: String? {
+        switch self {
+        case .invalidPairing: return "Invalid or missing pairing"
+        case .invalidEnvelope: return "The relay returned an invalid OTP envelope"
+        case .server(let status): return "Relay server returned HTTP \(status)"
+        }
+    }
+}
 func base64url(_ value: String) -> Data? {
     let b64 = value.replacingOccurrences(of: "-", with: "+").replacingOccurrences(of: "_", with: "/")
     return Data(base64Encoded: b64 + String(repeating: "=", count: (4 - b64.count % 4) % 4))

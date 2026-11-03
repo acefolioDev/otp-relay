@@ -375,10 +375,12 @@ class MainActivity : Activity() {
                                     val syncedBundle = newBundle.copy(
                                         pairId = serverPairId,
                                         pinCode = serverCode,
-                                        token = deviceToken
+                                        token = deviceToken,
+                                        qrPayload = """{"role":"iphone","pairId":"$serverPairId","token":"$deviceToken","keyId":"${newBundle.keyId}","encryptionKey":"${newBundle.encryptionKey}"}"""
                                     )
                                     currentPairing = syncedBundle
                                     pinDisplay.text = serverCode
+                                    qrImageView.setImageBitmap(PairingGenerator.createQRCodeBitmap(syncedBundle.qrPayload, 480))
                                     SecretStore.save(this@MainActivity,
                                         """{"role":"android","pairId":"${syncedBundle.pairId}","token":"$deviceToken","keyId":"${syncedBundle.keyId}","encryptionKey":"${syncedBundle.encryptionKey}"}""")
                                     pairStatusLabel.text = "PIN is active! Enter $serverCode on your iPhone."
