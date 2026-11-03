@@ -19,7 +19,5 @@ ios/DerivedData/
 ios/Signing.local.xcconfig
 
 # Binary build artifacts
-*.apk
-*.aab
-android/app/release/
+
 
