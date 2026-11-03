@@ -181,14 +181,26 @@ export function registerAuthRoutes(
 
   // 2. Initiate Device Pairing (e.g., Android generates pair code or QR payload)
   app.post('/api/v1/devices/pair/initiate', async (request, reply) => {
+    // Require the calling device to authenticate with its Bearer token.
+    const authHeader = request.headers.authorization ?? '';
+    const callerToken = /^Bearer [A-Za-z0-9_-]{43,128}$/.test(authHeader) ? authHeader.slice(7) : '';
+    if (!callerToken) {
+      reply.header('WWW-Authenticate', 'Bearer');
+      throw new HttpError(401, 'Unauthorized');
+    }
+    const callerTokenHash = createHash('sha256').update(callerToken).digest('hex');
+
     const parse = pairInitiateSchema.safeParse(request.body);
     if (!parse.success) throw new HttpError(400, 'Invalid initiate parameters');
     const { deviceId, keyId } = parse.data;
 
-    // Verify device
-    const deviceRes = await db.query('SELECT user_id, device_type FROM devices WHERE id = $1', [deviceId]);
+    // Verify device exists and belongs to the authenticated caller.
+    const deviceRes = await db.query('SELECT id, user_id, device_type, auth_token_hash FROM devices WHERE id = $1', [deviceId]);
     if (deviceRes.rows.length === 0) throw new HttpError(404, 'Device not found');
     const device = deviceRes.rows[0];
+
+    // Confirm the caller's token matches the device being paired.
+    if (device.auth_token_hash !== callerTokenHash) throw new HttpError(403, 'Token does not match the specified device');
 
     // Generate readable 8-char uppercase pair code
     const pairCode = randomBytes(4).toString('hex').toUpperCase();

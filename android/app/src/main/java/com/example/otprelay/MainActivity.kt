@@ -8,11 +8,15 @@ import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
+import android.os.Build
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import java.io.OutputStreamWriter
+import java.net.HttpURLConnection
+import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -406,11 +410,23 @@ class MainActivity : Activity() {
             }
             card.addView(passInput)
 
+            // Status label shown during loading
+            val statusLabel = TextView(this).apply {
+                text = ""
+                textSize = 13f
+                gravity = Gravity.CENTER
+                setTextColor(Color.parseColor("#94A3B8"))
+                layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                    topMargin = 16
+                }
+            }
+            card.addView(statusLabel)
+
             // Buttons: Sign In / Create Account
             val btnRow = LinearLayout(this).apply {
                 orientation = LinearLayout.HORIZONTAL
                 layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-                    topMargin = 28
+                    topMargin = 12
                 }
                 weightSum = 2f
             }
@@ -421,17 +437,6 @@ class MainActivity : Activity() {
                 setTextColor(Color.WHITE)
                 background = createCardDrawable("#0284C7")
                 layoutParams = LinearLayout.LayoutParams(0, 110, 1f).apply { rightMargin = 8 }
-                setOnClickListener {
-                    val em = emailInput.text.toString().trim()
-                    val pw = passInput.text.toString()
-                    if (em.isNotEmpty() && pw.length >= 6) {
-                        prefs.edit().putString("user_email", em).putString("user_name", "Android User").apply()
-                        Toast.makeText(this@MainActivity, "Signed in as $em", Toast.LENGTH_SHORT).show()
-                        renderActiveTab()
-                    } else {
-                        Toast.makeText(this@MainActivity, "Enter email & 6+ char password", Toast.LENGTH_SHORT).show()
-                    }
-                }
             }
 
             val registerBtn = Button(this).apply {
@@ -441,16 +446,127 @@ class MainActivity : Activity() {
                 typeface = Typeface.DEFAULT_BOLD
                 background = createCardDrawable("#38BDF8")
                 layoutParams = LinearLayout.LayoutParams(0, 110, 1f).apply { leftMargin = 8 }
-                setOnClickListener {
-                    val nm = nameInput.text.toString().trim()
-                    val em = emailInput.text.toString().trim()
-                    val pw = passInput.text.toString()
-                    if (em.isNotEmpty() && pw.length >= 6) {
-                        prefs.edit().putString("user_email", em).putString("user_name", nm.ifEmpty { "User" }).apply()
+            }
+
+            /** Puts both auth buttons in loading state while a network request is in flight. */
+            fun setLoading(loading: Boolean) {
+                loginBtn.isEnabled = !loading
+                registerBtn.isEnabled = !loading
+                statusLabel.text = if (loading) "Please wait…" else ""
+            }
+
+            /**
+             * Performs a JSON POST on a background thread.
+             * @param endpoint  path appended to serverUrl, e.g. "/api/v1/auth/login"
+             * @param body      JSON string to send
+             * @param onResult  called on the UI thread with (isSuccess, responseBody)
+             */
+            fun authPost(endpoint: String, body: String, onResult: (Boolean, String) -> Unit) {
+                setLoading(true)
+                Thread {
+                    var success = false
+                    var responseBody = ""
+                    try {
+                        val conn = URL("$serverUrl$endpoint").openConnection() as HttpURLConnection
+                        conn.requestMethod = "POST"
+                        conn.setRequestProperty("Content-Type", "application/json")
+                        conn.setRequestProperty("Accept", "application/json")
+                        conn.doOutput = true
+                        conn.connectTimeout = 15_000
+                        conn.readTimeout = 15_000
+                        OutputStreamWriter(conn.outputStream, "UTF-8").use { it.write(body) }
+                        val code = conn.responseCode
+                        success = code in 200..299
+                        val stream = if (success) conn.inputStream else conn.errorStream
+                        responseBody = stream?.bufferedReader()?.readText() ?: ""
+                    } catch (e: Exception) {
+                        responseBody = "{\"error\":\"${e.message?.replace("\"", "'")}\"}"
+                    }
+                    val finalSuccess = success
+                    val finalBody = responseBody
+                    runOnUiThread { onResult(finalSuccess, finalBody) }
+                }.start()
+            }
+
+            /** Extracts a top-level string field from a flat JSON string without pulling in a JSON library. */
+            fun jsonField(json: String, key: String): String {
+                val pattern = Regex("\"$key\"\\s*:\\s*\"([^\"\\\\]*(\\\\.[^\"\\\\]*)*)\"")
+                return pattern.find(json)?.groupValues?.get(1) ?: ""
+            }
+
+            loginBtn.setOnClickListener {
+                val em = emailInput.text.toString().trim()
+                val pw = passInput.text.toString()
+                if (em.isEmpty() || pw.length < 6) {
+                    Toast.makeText(this@MainActivity, "Enter email & 6+ char password", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                val deviceName = "Android ${Build.MODEL}"
+                val bodyJson = """{"email":"$em","password":"$pw","deviceName":"$deviceName","deviceType":"android"}"""
+                authPost("/api/v1/auth/login", bodyJson) { ok, resp ->
+                    setLoading(false)
+                    if (ok) {
+                        val name = jsonField(resp, "name")
+                        val email = jsonField(resp, "email")
+                        val deviceId = jsonField(resp, "id").let {
+                            // "id" might match user.id first; look for device block heuristically
+                            // Extract device sub-object first
+                            val deviceBlock = Regex("\"device\"\\s*:\\s*\\{([^}]*)\\}").find(resp)?.groupValues?.get(1) ?: ""
+                            if (deviceBlock.isNotEmpty()) jsonField("{$deviceBlock}", "id") else it
+                        }
+                        val deviceToken = run {
+                            val deviceBlock = Regex("\"device\"\\s*:\\s*\\{([^}]*)\\}").find(resp)?.groupValues?.get(1) ?: ""
+                            if (deviceBlock.isNotEmpty()) jsonField("{$deviceBlock}", "token") else ""
+                        }
+                        prefs.edit()
+                            .putString("user_email", email.ifEmpty { em })
+                            .putString("user_name", name)
+                            .putString("device_id", deviceId)
+                            .putString("device_token", deviceToken)
+                            .apply()
+                        Toast.makeText(this@MainActivity, "Signed in as ${email.ifEmpty { em }}", Toast.LENGTH_SHORT).show()
+                        renderActiveTab()
+                    } else {
+                        val errMsg = jsonField(resp, "error").ifEmpty { "Sign in failed" }
+                        Toast.makeText(this@MainActivity, errMsg, Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
+
+            registerBtn.setOnClickListener {
+                val nm = nameInput.text.toString().trim()
+                val em = emailInput.text.toString().trim()
+                val pw = passInput.text.toString()
+                if (em.isEmpty() || pw.length < 6) {
+                    Toast.makeText(this@MainActivity, "Enter name, email & 6+ char password", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                val deviceName = "Android ${Build.MODEL}"
+                val bodyJson = """{"name":"${nm.ifEmpty { "User" }}","email":"$em","password":"$pw","deviceName":"$deviceName","deviceType":"android"}"""
+                authPost("/api/v1/auth/register", bodyJson) { ok, resp ->
+                    setLoading(false)
+                    if (ok) {
+                        val name = jsonField(resp, "name")
+                        val email = jsonField(resp, "email")
+                        val deviceId = run {
+                            val deviceBlock = Regex("\"device\"\\s*:\\s*\\{([^}]*)\\}").find(resp)?.groupValues?.get(1) ?: ""
+                            if (deviceBlock.isNotEmpty()) jsonField("{$deviceBlock}", "id") else ""
+                        }
+                        val deviceToken = run {
+                            val deviceBlock = Regex("\"device\"\\s*:\\s*\\{([^}]*)\\}").find(resp)?.groupValues?.get(1) ?: ""
+                            if (deviceBlock.isNotEmpty()) jsonField("{$deviceBlock}", "token") else ""
+                        }
+                        prefs.edit()
+                            .putString("user_email", email.ifEmpty { em })
+                            .putString("user_name", name.ifEmpty { nm })
+                            .putString("device_id", deviceId)
+                            .putString("device_token", deviceToken)
+                            .apply()
                         Toast.makeText(this@MainActivity, "Account created & signed in", Toast.LENGTH_SHORT).show()
                         renderActiveTab()
                     } else {
-                        Toast.makeText(this@MainActivity, "Enter name, email & 6+ char password", Toast.LENGTH_SHORT).show()
+                        val errMsg = jsonField(resp, "error").ifEmpty { "Registration failed" }
+                        Toast.makeText(this@MainActivity, errMsg, Toast.LENGTH_LONG).show()
                     }
                 }
             }
@@ -459,19 +575,15 @@ class MainActivity : Activity() {
             btnRow.addView(registerBtn)
             card.addView(btnRow)
 
-            // Optional Google Login Button
+            // Google Sign-In — backend not yet implemented; disabled placeholder
             val googleBtn = Button(this).apply {
-                text = "Sign In with Google (Optional)"
+                text = "Sign In with Google (Coming Soon)"
                 isAllCaps = false
-                setTextColor(Color.WHITE)
-                background = createCardDrawable("#334155")
+                isEnabled = false
+                setTextColor(Color.parseColor("#64748B"))
+                background = createCardDrawable("#1E293B")
                 layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 110).apply {
                     topMargin = 16
-                }
-                setOnClickListener {
-                    prefs.edit().putString("user_email", "user@gmail.com").putString("user_name", "Google User").apply()
-                    Toast.makeText(this@MainActivity, "Google Sign-In successful", Toast.LENGTH_SHORT).show()
-                    renderActiveTab()
                 }
             }
             card.addView(googleBtn)
@@ -503,7 +615,12 @@ class MainActivity : Activity() {
                 background = createCardDrawable("#475569")
                 layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 110)
                 setOnClickListener {
-                    prefs.edit().remove("user_email").remove("user_name").apply()
+                    prefs.edit()
+                        .remove("user_email")
+                        .remove("user_name")
+                        .remove("device_id")
+                        .remove("device_token")
+                        .apply()
                     Toast.makeText(this@MainActivity, "Signed out", Toast.LENGTH_SHORT).show()
                     renderActiveTab()
                 }

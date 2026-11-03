@@ -40,7 +40,7 @@ export function buildApp(
       'X-Request-Id': request.id });
     if (config.production) reply.header('Strict-Transport-Security', 'max-age=31536000');
   });
-  installAuth(app, config, store);
+  installAuth(app, config, store, options.db);
   app.addHook('onSend', async (request, reply) => {
     reply.header('Server-Timing', `app;dur=${(performance.now() - request.startedAt).toFixed(2)}`);
   });

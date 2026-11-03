@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import type { Config, Pair } from '../config/env.js';
 import type { Store } from '../services/types.js';
+import type { Database } from '../services/db.js';
 import { digest, matchesHash } from '../utils/crypto.js';
 import { HttpError } from '../utils/errors.js';
 
@@ -9,7 +10,13 @@ declare module 'fastify' {
   interface FastifyContextConfig { role?: Role }
   interface FastifyRequest { pair: Pair | null; startedAt: number; longPoll: boolean }
 }
-export function installAuth(app: FastifyInstance, config: Config, store: Store) {
+
+interface DevicePairRow {
+  pair_id: string;
+  key_id: string | null;
+}
+
+export function installAuth(app: FastifyInstance, config: Config, store: Store, db?: Database) {
   app.decorateRequest('pair', null);
   app.addHook('onRequest', async (request, reply) => {
     const role = request.routeOptions.config.role;
@@ -27,6 +34,37 @@ export function installAuth(app: FastifyInstance, config: Config, store: Store) 
         for (const hash of hashes) {
           const match = matchesHash(token, hash);
           if (match) { request.pair = pair; valid = true; }
+        }
+      }
+
+      // Fall back to DB lookup when static config has no match and DB is available.
+      if (!valid && token.length > 0 && db) {
+        const tokenHash = digest(token);
+        // Map middleware role to DB device_type value.
+        const deviceType = role === 'android' ? 'android' : 'ios';
+        const result = await db.query<DevicePairRow>(
+          `SELECT dp.id AS pair_id, dp.key_id
+           FROM devices d
+           JOIN device_pairs dp
+             ON (d.device_type = 'android' AND dp.android_device_id = d.id)
+             OR (d.device_type = 'ios'     AND dp.ios_device_id     = d.id)
+           WHERE d.auth_token_hash = $1
+             AND d.device_type     = $2
+             AND dp.status         = 'active'
+           LIMIT 1`,
+          [tokenHash, deviceType]
+        );
+        const dbRow = result.rows[0];
+        if (dbRow) {
+          // Build a synthetic Pair so OTP relay routes work unchanged.
+          const syntheticPair: Pair = {
+            pairId: dbRow.pair_id,
+            androidTokenHashes: [],
+            iphoneTokenHashes: [],
+            keyIds: dbRow.key_id ? [dbRow.key_id] : [],
+          };
+          request.pair = syntheticPair;
+          valid = true;
         }
       }
     }

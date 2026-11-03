@@ -2,6 +2,10 @@ package com.example.otprelay
 
 import android.graphics.Bitmap
 import android.graphics.Color
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.EncodeHintType
+import com.google.zxing.qrcode.QRCodeWriter
+import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
 import java.security.SecureRandom
 import java.util.UUID
 
@@ -42,19 +46,19 @@ object PairingGenerator {
     }
 
     /**
-     * Pure Kotlin standalone QR code matrix generator (no external dependencies needed)
+     * Generates a real scannable QR code bitmap using ZXing.
      */
     fun createQRCodeBitmap(content: String, size: Int = 512): Bitmap {
+        val hints = mapOf(
+            EncodeHintType.ERROR_CORRECTION to ErrorCorrectionLevel.M,
+            EncodeHintType.MARGIN to 2
+        )
+        val writer = QRCodeWriter()
+        val matrix = writer.encode(content, BarcodeFormat.QR_CODE, size, size, hints)
         val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
-        val hash = content.hashCode()
-        // Draw a distinct high-contrast verifiable visual matrix
         for (x in 0 until size) {
             for (y in 0 until size) {
-                val isBorder = x < 24 || x > size - 24 || y < 24 || y > size - 24
-                val isCorner = (x < 96 && y < 96) || (x > size - 96 && y < 96) || (x < 96 && y > size - 96)
-                val bitPattern = ((x / 16) * 31 + (y / 16) * 17 + hash) % 3 == 0
-                val pixelColor = if (isBorder || isCorner || bitPattern) Color.BLACK else Color.WHITE
-                bitmap.setPixel(x, y, pixelColor)
+                bitmap.setPixel(x, y, if (matrix[x, y]) Color.BLACK else Color.WHITE)
             }
         }
         return bitmap

@@ -18,6 +18,7 @@ struct ContentView: View {
     @AppStorage("user_email") private var userEmail: String = ""
     @AppStorage("user_name") private var userName: String = ""
     @AppStorage("device_id") private var deviceId: String = ""
+    @AppStorage("device_token") private var deviceToken: String = ""
     @State private var isGoogleSigningIn = false
 
     // Auth Form State (Login / Register)
@@ -360,9 +361,11 @@ struct ContentView: View {
                                     .font(.caption2.bold())
                                     .foregroundStyle(.secondary)
 
-                                LiquidGlassButton(title: "Sign in with Google", icon: "g.circle.fill", isProminent: false) {
-                                    triggerGoogleSignIn()
+                                LiquidGlassButton(title: "Sign in with Google (Coming Soon)", icon: "g.circle.fill", isProminent: false) {
+                                    // Google Sign-In is not yet available
                                 }
+                                .disabled(true)
+                                .opacity(0.5)
                             }
                         }
                     } else {
@@ -514,8 +517,49 @@ struct ContentView: View {
 
     private func completePinPairing(_ pin: String) {
         showPinSheet = false
-        pairingStatus = "Activating PIN pairing..."
-        pairingStatus = "PIN \(pin) submitted for verification."
+        guard !deviceId.isEmpty, !deviceToken.isEmpty else {
+            pairingStatus = "Please sign in first before pairing."
+            return
+        }
+        pairingStatus = "Verifying pairing code..."
+
+        let endpoint = "\(serverURL)/api/v1/devices/pair/complete"
+        guard let url = URL(string: endpoint) else {
+            pairingStatus = "Invalid server URL."
+            return
+        }
+
+        let payload: [String: Any] = [
+            "pairCode": pin.uppercased(),
+            "deviceId": deviceId
+        ]
+
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue("Bearer \(deviceToken)", forHTTPHeaderField: "Authorization")
+        req.httpBody = try? JSONSerialization.data(withJSONObject: payload)
+
+        URLSession.shared.dataTask(with: req) { data, response, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    self.pairingStatus = "Pairing failed: \(error.localizedDescription)"
+                    return
+                }
+                guard let data = data,
+                      let http = response as? HTTPURLResponse else {
+                    self.pairingStatus = "Invalid server response."
+                    return
+                }
+                if http.statusCode == 200 {
+                    self.isPairingActive = true
+                    self.pairingStatus = "Pairing complete and verified!"
+                } else {
+                    let msg = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["error"] as? String
+                    self.pairingStatus = "Pairing failed: \(msg ?? "HTTP \(http.statusCode)")"
+                }
+            }
+        }.resume()
     }
 
     private func submitAuth() {
@@ -553,13 +597,36 @@ struct ContentView: View {
             DispatchQueue.main.async {
                 self.isSubmittingAuth = false
                 if let error = error {
-                    // Offline / Local Simulation fallback
-                    self.userEmail = self.authEmail
-                    self.userName = self.authMode == .register ? (self.authName.isEmpty ? "User" : self.authName) : "User"
+                    self.authStatusMessage = "Connection failed: \(error.localizedDescription)"
                     return
                 }
-                guard let data = data,
-                      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                guard let data = data else {
+                    self.authStatusMessage = "Authentication failed. Check credentials."
+                    return
+                }
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    self.authStatusMessage = "Invalid server response."
+                    return
+                }
+                if httpResponse.statusCode == 409 {
+                    self.authStatusMessage = "An account with this email already exists."
+                    return
+                }
+                if httpResponse.statusCode == 401 {
+                    self.authStatusMessage = "Invalid email or password."
+                    return
+                }
+                if !(200..<300).contains(httpResponse.statusCode) {
+                    // Try to parse the error field from JSON
+                    if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                       let errorMsg = json["error"] as? String {
+                        self.authStatusMessage = errorMsg
+                    } else {
+                        self.authStatusMessage = "Authentication failed (HTTP \(httpResponse.statusCode))."
+                    }
+                    return
+                }
+                guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                       let user = json["user"] as? [String: Any] else {
                     self.authStatusMessage = "Authentication failed. Check credentials."
                     return
@@ -567,9 +634,9 @@ struct ContentView: View {
 
                 self.userEmail = user["email"] as? String ?? self.authEmail
                 self.userName = user["name"] as? String ?? self.authName
-                if let device = json["device"] as? [String: Any],
-                   let token = device["token"] as? String {
+                if let device = json["device"] as? [String: Any] {
                     self.deviceId = device["id"] as? String ?? ""
+                    self.deviceToken = device["token"] as? String ?? ""
                 }
             }
         }.resume()

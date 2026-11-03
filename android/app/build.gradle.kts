@@ -14,6 +14,9 @@ android {
     buildFeatures { buildConfig = true }
     buildTypes { getByName("release") { isMinifyEnabled = false } }
 }
-dependencies { testImplementation("junit:junit:4.13.2") }
+dependencies {
+    testImplementation("junit:junit:4.13.2")
+    implementation("com.google.zxing:core:3.5.3")
+}
 
 kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }
